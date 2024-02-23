@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System;
 using System.Reflection;
 using System.Collections.Generic;
 using RimWorld;
@@ -14,13 +15,87 @@ namespace TKS_PriorityTreatment
     [StaticConstructorOnStartup]
     public static class InsertHarmony
     {
+        public static Type TypeByName(string name)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var tt = assembly.GetType(name);
+                if (tt != null)
+                {
+                    return tt;
+                }
+            }
+
+            return null;
+        }
+
         static InsertHarmony()
         {
             Harmony harmony = new Harmony("TKS_PriorityTreatment");
             //Harmony.DEBUG = true;
             harmony.PatchAll();
             // Harmony.DEBUG = false;
-            Log.Message($"TKS_PriorityTreatment: Patching finished");
+            
+            var myPatchedMethods = harmony.GetPatchedMethods();
+            bool anyConflict = false;
+            foreach (MethodBase method in myPatchedMethods)
+            {
+                if (method is null) { continue; };
+                Log.Message("checking " + method.ReflectedType.Name + "." + method.Name+" for other harmony patches");
+                MethodInfo original = method.ReflectedType.GetMethod(method.Name);
+                
+                if (original is null)
+                {
+                    Type containingType = TypeByName(method.ReflectedType.Name);
+                    original = containingType?.GetMethod(method.Name);
+
+                    if (original is null)
+                    {
+                        Log.Warning("could not find original method through ReflectedType or TypeByName("+method.ReflectedType.Name+"), continuing");
+                    }
+                    continue;
+                }
+
+                Patches patches = Harmony.GetPatchInfo(original);
+
+                if (!(patches is null))
+                {
+                    //Log.Message("found patches from " + patches.Owners.ToCommaList());
+
+                    foreach (var patch in patches.Prefixes)
+                    {
+                        if (patch != null && patch.owner != harmony.Id)
+                        {
+                            anyConflict = true;
+                            Log.Warning("TKS_PriorityTreatment: found other prefixes for method " + method.Name + ": "+patch.owner);
+                        }
+                    }
+                    foreach (var patch in patches.Postfixes)
+                    {
+                        if (patch != null && patch.owner != harmony.Id)
+                        {
+                            anyConflict = true;
+                            Log.Warning("TKS_PriorityTreatment: found other postfixes for method " + method.Name + ": " + patch.owner);
+                        }
+                    }
+                    foreach (var patch in patches.Transpilers)
+                    {
+                        if (patch != null && patch.owner != harmony.Id)
+                        {
+                            anyConflict = true;
+                            Log.Warning("TKS_PriorityTreatment: found other transpilers for method " + method.Name + ": " + patch.owner);
+                        }
+                    }
+                }
+
+            }
+                if (anyConflict)
+            {
+                Log.Warning("TKS_PriorityTreatment: harmony conflicts detected, please report mods if things are acting up");
+                
+            }
+            
+            Log.Message("TKS_PriorityTreatment: Patching finished");
         }
     }
 
@@ -30,13 +105,15 @@ namespace TKS_PriorityTreatment
         public bool wakeUpToTend = false;
         public bool allowEating = true;
         public int docPriority = 1;
+        public bool debugPrint = false;
 
         public override void ExposeData()
         {
             Scribe_Values.Look(ref includeSickness, "includeSickness");
             Scribe_Values.Look(ref wakeUpToTend, "wakeUpToTend");
             Scribe_Values.Look(ref allowEating, "allowEating");
-            Scribe_Values.Look(ref docPriority, "docPriority");
+            //Scribe_Values.Look(ref docPriority, "docPriority");
+            Scribe_Values.Look(ref debugPrint, "debugPrint");
 
             base.ExposeData();
         }
@@ -46,12 +123,37 @@ namespace TKS_PriorityTreatment
     {
         TKS_PriorityTreatmentSettings settings;
 
+        public static void DebugMessage(string message)
+        {
+            if (LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().debugPrint)
+            {
+                Log.Message(message);
+            }
+        }
+
         public static List<string> emergencyHediffs = new List<string> {"HeartAttack", "WoundInfection", "Burn", "ChemicalBurn", "Crush", "Cut", "SurgicalCut",
             "Scratch", "Bite", "Stab", "Gunshot", "Shredded", "BeamWound", "InfantIllness", "Crack", "Bruise"};
 
         public static IEnumerable<Thing> PotentialPatientsGlobal(Pawn pawn)
         {
-            return pawn.Map.mapPawns.SpawnedPawnsWithAnyHediff;
+            List<Pawn> animals = new List<Pawn>();
+            //sort between animals and humans
+            foreach (Pawn otherPawn in pawn.Map.mapPawns.SpawnedPawnsWithAnyHediff)
+            {
+                if (otherPawn.RaceProps.Humanlike)
+                {
+                    yield return otherPawn;
+                }
+                else
+                {
+                    animals.Add(otherPawn);
+                }
+            }
+
+            foreach (Pawn animalPawn in animals)
+            {
+                yield return animalPawn;
+            }
         }
 
         public static bool MapHasPatients(Pawn pawn)
@@ -102,6 +204,8 @@ namespace TKS_PriorityTreatment
                 {
                     if (sickPawn == null) { continue; }
 
+                    //TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: checking " + sickPawn.Name);
+
                     //check for myself
                     if (sickPawn == doctorPawn && !doctorPawn.playerSettings.selfTend) { continue; }
 
@@ -123,19 +227,26 @@ namespace TKS_PriorityTreatment
                             //check if hediff is emergency
                             foreach (Hediff hediff in pawnHediffs)
                             {
-                                //Log.Message("checking " + otherPawn.Name + "'s " + hediff.def.defName);
+                                TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: checking " + sickPawn.Name + "'s " + hediff.def.defName);
                                 if (hediff != null && hediff.TendableNow() && TKS_PriorityTreatment.emergencyHediffs.Contains(hediff.def.defName) )
                                 {
+                                    TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: " + hediff.def.defName + " is tendable now, checking pawn settings");
                                     shouldTendNow = (sickPawn.playerSettings != null && HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(sickPawn));
-                                    break;
+                                    if (shouldTendNow)
+                                    {
+                                        break;
+                                    }
 
                                 }
                             }
                         }
                         if (shouldTendNow)
                         {
-                            //Log.Message("SomeoneNeedsTreatment: " + sickPawn.Name + " needs treatment (include sickness: "+includeSickness.ToString()+")");
+                            TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: " + sickPawn.Name + " needs treatment (include sickness: "+includeSickness.ToString()+")");
                             return sickPawn;
+                        } else
+                        {
+                            continue; 
                         }
                         
                         
@@ -193,64 +304,13 @@ namespace TKS_PriorityTreatment
                     }
                     else
                     {
-                        //Log.Message(pawn.Name + " is a doctor");
+                        TKS_PriorityTreatment.DebugMessage("PawnIsDoctor: "+pawn.Name + " is a doctor");
                         return true;
 
                     }
                 }
         }
             return false;
-        }
-
-        public static bool ShouldBeTendedNowByPlayerUrgent(Pawn pawn)
-        {
-            //Log.Message("running should be tended now urgent for target pawn: " + pawn.Name);
-
-            HediffSet pawnsHediffs = pawn.health.hediffSet;
-            List<Hediff> pawnHediffs = pawnsHediffs.hediffs;
-
-            bool __result = false;
-
-            if (HasTendableHediff(pawn))
-            {
-                //Log.Message(pawn.Name + " has hediffs needing tend");
-
-                bool includeSickness = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().includeSickness;
-
-                if (includeSickness)
-                {
-                    __result = HealthAIUtility.ShouldBeTendedNowByPlayer(pawn);
-                }
-                else
-                {
-                    //check if hediff is emergency
-                    foreach (Hediff hediff in pawnHediffs)
-                    {
-                        //Log.Message("checking " + pawn.Name + "'s " + hediff.def.defName);
-
-                        if (hediff != null && TKS_PriorityTreatment.emergencyHediffs.Contains(hediff.def.defName) && hediff.TendableNow(false))
-                        {
-
-                            //Log.Message("ShouldBeTendedNowByPlayerUrgent: checking can priority treatment for " + pawn.Name + " due to presence of " + hediff.def.defName + " (include sickness: false)");
-                            __result = (pawn.playerSettings != null && HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(pawn));
-                            break;
-
-                        }
-                    }
-
-                }
-                if (__result)
-                {
-                    //Log.Message("ShouldBeTendedNowByPlayerUrgent: Succesfully set priority treatment for target pawn " + pawn.Name);
-                }
-                else
-                {
-                    //Log.Message(pawn.Name + " does not need to be treated ");
-                }
-            }
-
-            return __result;
-
         }
 
         public TKS_PriorityTreatment(ModContentPack content) : base(content)
@@ -268,10 +328,10 @@ namespace TKS_PriorityTreatment
             listingStandard.CheckboxLabeled("TKSWakeUpToTend".Translate(), ref settings.wakeUpToTend, "TKSWakeUpToTendToolTip".Translate());
             listingStandard.CheckboxLabeled("TKSAllowEating".Translate(), ref settings.allowEating, "TKSAllowEatingToolTip".Translate());
 
-            listingStandard.Label("TKSDocPriorityToolTip".Translate(), -1, "TKSDocPriorityToolTip".Translate());
-            listingStandard.TextFieldNumeric<int>(ref settings.docPriority, ref editBufferFloat, 1, 4);
-            
-            //settings.exampleFloat = listingStandard.Slider(settings.exampleFloat, 100f, 300f);
+            //listingStandard.Label("TKSDocPriorityToolTip".Translate(), -1, "TKSDocPriorityToolTip".Translate());
+            //listingStandard.TextFieldNumeric<int>(ref settings.docPriority, ref editBufferFloat, 1, 4);
+
+            listingStandard.CheckboxLabeled("TKSDebugPrint".Translate(), ref settings.debugPrint);
             listingStandard.End();
             base.DoSettingsWindowContents(inRect);
         }
@@ -301,20 +361,20 @@ namespace TKS_PriorityTreatment
                 return true;
             }
             //only use this method if player settings include wake up to tend
-            if (!wakeUpToTEnd)
+            if (!wakeUpToTEnd || pawn.CurJob.playerForced)
             {
                 return true;
-            }
-
-            if (TKS_PriorityTreatment.PawnIsDoctor(pawn) && pawn.jobs.curDriver.PlayerInterruptable)
+            }           
+            //only continue if doctor, job is interrruptable and not doing a duty (caravan et al)
+            if (TKS_PriorityTreatment.PawnIsDoctor(pawn) && pawn.jobs.curDriver.PlayerInterruptable && pawn.mindState.duty == null)
             {
-                //Log.Message("CheckForJobOverride: checking if " + pawn.Name + " needs to wake up to tend anyone");
+                TKS_PriorityTreatment.DebugMessage("CheckForJobOverride: checking if " + pawn.Name + " needs to wake up to tend anyone");
 
                 Pawn sickPawn = TKS_PriorityTreatment.SomeoneNeedsTreatment(pawn);
 
                 if (sickPawn != null ) { 
 
-                    //Log.Message("CheckForJobOverride: waking up " + pawn.Name + " because " + sickPawn.Name + " needs treatment");
+                    TKS_PriorityTreatment.DebugMessage("CheckForJobOverride: waking up " + pawn.Name + " because " + sickPawn.Name + " needs treatment");
 
                     pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
 
@@ -341,7 +401,22 @@ namespace TKS_PriorityTreatment
 
             Pawn pawn = Traverse.Create(__instance).Field("pawn").GetValue<Pawn>();
 
+            bool allowEating = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().allowEating;
+
             if (pawn == null) { return true; }
+
+            //break out if there's a queued job (at this stage, the current job is empty but there may be a player-issued job in the queue)
+            if (__instance.jobQueue.AnyPlayerForced)
+            {
+                TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: queued jobs by player exist, not overiding");
+                return true;
+            }
+
+            //dont stop if doing a duty (caravan)
+            if (pawn.mindState.duty != null)
+            {
+                TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: not overriding as pawn is doing duty " + pawn.mindState.duty.def.defName);
+            }
 
             if (TKS_PriorityTreatment.PawnIsDoctor(pawn))
             {
@@ -353,12 +428,10 @@ namespace TKS_PriorityTreatment
                         return true;
                     }
 
-                    bool allowEating = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().allowEating;
-
                     //if eating and we allow docs to eat, keep going
                     if (pawn.CurJobDef == JobDefOf.Ingest && allowEating)
                     {
-                        //Log.Message("TryFindAndStartJob: doctor " + pawn.Name + " is eating but player allows that, not overriding for emergency treatment");
+                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: doctor " + pawn.Name + " is eating but player allows that, not overriding for emergency treatment");
                         return true;
                     }
                 }
@@ -368,15 +441,26 @@ namespace TKS_PriorityTreatment
 
                 if (sickPawn != null)
                 {
-                    //Log.Message("TryFindAndStartJob: pawn " + sickPawn.Name + " needs treatment, attempting to treat with " + pawn.Name);
+
+                    if (pawn.needs.food != null && pawn.needs.food.CurCategory >= HungerCategory.UrgentlyHungry && allowEating)
+                    {
+                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: doctor " + pawn.Name + " needs to eat, not overriding for emergency treatment");
+                        return true;
+                    }
+
+                    TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: pawn " + sickPawn.Name + " needs treatment, attempting to treat with " + pawn.Name);
 
                     if (pawn.CurJob != null && pawn.jobs.curDriver.PlayerInterruptable)
                     {
-                        //Log.Message("TryFindAndStartJob: interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + sickPawn.Name);
+                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + sickPawn.Name);
                         pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
                     }
 
-                    Job gotoHealJob = new Job(JobDefOf.TendPatient, sickPawn);
+                    Thing medicine = HealthAIUtility.FindBestMedicine(pawn, sickPawn, false);
+                    Job gotoHealJob = new Job(JobDefOf.TendPatient, sickPawn, medicine);
+
+                    gotoHealJob.count = Medicine.GetMedicineCountToFullyHeal(sickPawn);
+                    gotoHealJob.draftedTend = false;
 
                     pawn.Reserve(sickPawn, gotoHealJob);
                     __instance.StartJob(gotoHealJob, JobCondition.InterruptOptional, null, false, false, null, null, false, false, null, false, true);
@@ -411,8 +495,8 @@ namespace TKS_PriorityTreatment
                 return true;
             }
 
-            //if performing a user-forced job, keep going
-            if (__instance.CurJob.playerForced)
+            //if performing a user-forced job (or a duty like caravan), keep going
+            if (__instance.CurJob.playerForced || __instance.mindState.duty != null)
             {
                 return true;
             }
@@ -436,17 +520,30 @@ namespace TKS_PriorityTreatment
             bool allowEat = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().allowEating;
             if (allowEat && (__instance.CurJobDef == JobDefOf.Ingest))
             {
-                //Log.Message("OnRareTick: doctor " + __instance.Name + " is eating but player allows that, not overriding for emergency treatment");
+                TKS_PriorityTreatment.DebugMessage("OnRareTick: doctor " + __instance.Name + " is eating but player allows that, not overriding for emergency treatment");
                 return true;
             }
 
-            //Log.Message("OnRareTick: pawn " + __instance.Name + " checking for urgent medical needs that can be tended");
+            TKS_PriorityTreatment.DebugMessage("OnRareTick: pawn " + __instance.Name + " checking for urgent medical needs that can be tended");
             Pawn sickPawn = TKS_PriorityTreatment.SomeoneNeedsTreatment(__instance);
 
             if (sickPawn != null) { 
 
-                //Log.Message("OnRareTick: sick pawn " + sickPawn.Name + " needs treatment and can be reserved, attempting to stop current job for "+__instance.Name);
-                __instance.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
+                if (__instance.CurJob != null && __instance.jobs.curDriver.PlayerInterruptable)
+                {
+                    TKS_PriorityTreatment.DebugMessage("OnRareTick: interrupting current job (" + __instance.CurJobDef.defName + ") and attempting to provide treatment for " + sickPawn.Name);
+                    __instance.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
+                }
+
+                //create a job here to avoid re-doing the someoneNeedsTreatment call in TryFindAndStartJob
+                Thing medicine = HealthAIUtility.FindBestMedicine(__instance, sickPawn, false);
+                Job gotoHealJob = new Job(JobDefOf.TendPatient, sickPawn, medicine);
+
+                gotoHealJob.count = Medicine.GetMedicineCountToFullyHeal(sickPawn);
+                gotoHealJob.draftedTend = false;
+
+                __instance.Reserve(sickPawn, gotoHealJob);
+                __instance.jobs.StartJob(gotoHealJob, JobCondition.InterruptOptional, null, false, false, null, null, false, false, null, false, true);
 
                 //always run main method here
                 return true;
@@ -455,30 +552,4 @@ namespace TKS_PriorityTreatment
             return true;
         }
     }
-/*
-    [HarmonyPatch(typeof(HealthAIUtility), "ShouldBeTendedNowByPlayerUrgent")]
-    static class HealthAIUtility_Patches
-    {
-
-        [HarmonyPrefix]
-        public static bool ShouldBeTendedNowByPlayerUrgent_Prefix(Pawn pawn, ref bool __result)
-        {
-            //this is only neccessary if we want doctors to prioritize sickness over their own needs
-            bool includeSickness = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().includeSickness;
-
-            if (!includeSickness)
-            {
-                __result=TKS_PriorityTreatment.ShouldBeTendedNowByPlayerUrgent(pawn);
-                return false;
-            }
-            else
-            {
-                Log.Message("ShouldBeTendedNowByPlayerUrgent: Overridding ShouldBeTendedUrgent with standard method (include sickness) for "+pawn.Name);
-                __result=HealthAIUtility.ShouldBeTendedNowByPlayer(pawn);
-                Log.Message("ShouldBeTendedNowByPlayerUrgent: returns " + __result.ToString());
-                return false;
-            }
-        }
-    }
-    */
 }

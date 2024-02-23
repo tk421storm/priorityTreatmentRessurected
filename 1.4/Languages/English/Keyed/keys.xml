@@ -9,4 +9,5 @@
 	<TKSDocPriorityToolTip>Pawns must have their doctor priority set to this number or less in order to be affected by this mod.</TKSDocPriorityToolTip>
 	<TKSAllowEating>Allow doctors to eat</TKSAllowEating>
 	<TKSAllowEatingToolTip>If this box is un-checked, doctors will continue doing emergency treatment instead of feeding themselves (take care of your doctors!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Toggle to show extra debug info in the logs.</TKSDebugPrint>
 </LanguageData>
