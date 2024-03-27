@@ -15,21 +15,12 @@
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == '1.4|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>1.4\Assemblies\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>1.4\Assemblies\</OutputPath>
+    <DefineConstants>v1_4</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -37,11 +28,22 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1.5|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>1.5\Assemblies\</OutputPath>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <DefineConstants>v1_5</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Source\PriorityTreatmentRessurected.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="1.5\Languages\English\Keyed\keys.xml" />
     <Content Include="1.4\Languages\English\Keyed\keys.xml" />
     <Content Include="About\About.xml" />
   </ItemGroup>
@@ -49,6 +51,7 @@
     <Folder Include="1.4\Assemblies\" />
     <Folder Include="1.4\Defs\" />
     <Folder Include="1.4\Patches\" />
+    <Folder Include="1.5\Defs\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">

@@ -8,6 +8,7 @@
 	<supportedVersions>
 		<!-- the version(s) your mod supports -->
 		<li>1.4</li>
+		<li>1.5</li>
 	</supportedVersions>
 	<description>Makes tending medical an emergency priority for your doctor pawns.</description>
 	<modDependencies>

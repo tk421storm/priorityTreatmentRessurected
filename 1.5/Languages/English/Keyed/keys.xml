@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Treat long-term illnesses</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>By default, your doctors will only treat injuries as absolute emergencies. Check this box to include all forms of treatment (including long-term illness treatment).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Wake up to tend</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Check this for your doctors to wake up and tend even if they are asleep. If you are using another mod that accomplishes this (ie Wake Up), you can leave this un-checked.</TKSWakeUpToTendToolTip>
+	<TKSDocPriority>Emergency Doctor Priority Requirment</TKSDocPriority>
+	<TKSDocPriorityToolTip>Pawns must have their doctor priority set to this number or less in order to be affected by this mod.</TKSDocPriorityToolTip>
+	<TKSAllowEating>Allow doctors to eat</TKSAllowEating>
+	<TKSAllowEatingToolTip>If this box is un-checked, doctors will continue doing emergency treatment instead of feeding themselves (take care of your doctors!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Toggle to show extra debug info in the logs.</TKSDebugPrint>
+</LanguageData>
