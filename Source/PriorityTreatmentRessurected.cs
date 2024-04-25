@@ -99,6 +99,33 @@ namespace TKS_PriorityTreatment
         }
     }
 
+    public static class Utils
+    {
+
+        static Utils()
+        {
+        }
+
+        public static bool ExtraPawnChecks(Pawn sickPawn)
+        {
+            bool returnValue = true;
+
+            //check for android gene
+            if (sickPawn.genes != null && sickPawn.genes.GenesListForReading.Count != 0)
+            {
+                bool isAndroid = sickPawn.genes.GenesListForReading.Any((Gene x) => x.def.defName == "VREA_SyntheticBody");
+                if (isAndroid)
+                {
+                    TKS_PriorityTreatment.DebugMessage("ExtraPawnChecks: not priority tending android");
+                    returnValue = false;
+
+                }
+            }
+
+            return returnValue;
+        }
+    }
+
     public class MapComponent_PriorityTreatment : MapComponent
     {
 
@@ -265,6 +292,7 @@ namespace TKS_PriorityTreatment
         //this fallback list includes included jobDefOfs
         public static List<string> doctorWorkDefs = new List<string> { "Rescue", "TendPatient", "DeliverToBed", "TakeWoundedPrisonerToBed", "TakeDownedPawnToBedDrafted", "TendEntity" };
 #endif
+
         public static IEnumerable<Thing> PotentialPatientsGlobal(Map map)
         {
             List<Pawn> animals = new List<Pawn>();
@@ -334,6 +362,9 @@ namespace TKS_PriorityTreatment
         {
             if (pawn.Dead == true) { return false; }
 
+            //do extra mod-based checks
+            if (!Utils.ExtraPawnChecks(pawn)) { return false; }
+
             List<Hediff> pawnsHediffs = pawn.health.hediffSet.hediffs;
 
             foreach (Hediff hediff in pawnsHediffs)
@@ -347,11 +378,12 @@ namespace TKS_PriorityTreatment
             return false;
         }
 
-        public static Job  MakePriorityTreatmentJob(Pawn pawn, out Pawn sickPawn, string callingFunction = "TryFindAndStartJob")
+        public static Job  MakePriorityTreatmentJob(Pawn pawn, out Pawn sickPawn, out Job queuedJob, string callingFunction = "TryFindAndStartJob")
         {
             //primary function, return a job for the doctor to do (tend, resuce, or eat) or return null if none
             Job job = null;
             sickPawn = null;
+            queuedJob = null;
 
             if (pawn == null) { return job; }
 
@@ -360,6 +392,7 @@ namespace TKS_PriorityTreatment
             if (treatmentComponent == null || treatmentComponent.tendablePawns.Count == 0)
             {
                 //TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: pawn "+pawn.Name+" map or component is null, cannot prioritize treatment");
+                //Log.WarningOnce("PriorityTreatment: map component for this map (or the map itself) is null, no priority treatment will occur", 1);
                 return job;
             }
 
@@ -368,10 +401,17 @@ namespace TKS_PriorityTreatment
             Pawn_JobTracker jobTracker = pawn.jobs;
 
             //break out if there's a queued job (at this stage, the current job is empty but there may be a player-issued job in the queue)
-            if (jobTracker.jobQueue != null && jobTracker.jobQueue.AnyPlayerForced)
-            {
-                TKS_PriorityTreatment.DebugMessage(callingFunction + ": queued jobs by player exist, not overiding");
-                return job;
+            if (jobTracker.jobQueue != null) {
+                if (jobTracker.jobQueue.AnyPlayerForced)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": queued jobs by player exist, not overiding");
+                    return job;
+                }
+                if (jobTracker.jobQueue.Count != 0)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": queued jobs exist, not overiding (possible compatbility with common sense)");
+                    return job;
+                }
             }
 
             //dont stop if doing a duty (caravan)
@@ -381,116 +421,133 @@ namespace TKS_PriorityTreatment
                 return job;
             }
 
-            if (TKS_PriorityTreatment.PawnIsDoctor(pawn, callingFunction))
+            //if performing a user-forced job (or already tending), keep going
+            if (pawn.CurJob != null)
             {
-                //if performing a user-forced job (or already tending), keep going
+
+                //allow player forced jobs (queues dont seem to work at this stage)
+                if (pawn.CurJob.playerForced)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is performing player-set job, not overriding for emergency treatment");
+                    return job;
+                }
+
+                //if eating and we allow docs to eat, keep going
+                if (pawn.CurJob.def == JobDefOf.Ingest && allowEating)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is eating but player allows that, not overriding for emergency treatment");
+                    return job;
+                }
+
+                //if we're already tending keep going
+                if (TKS_PriorityTreatment.doctorWorkDefs.Contains(pawn.CurJob.def.defName))
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is already doing a doctor job");
+                    return job;
+                }
+            }
+
+            //only go if there are patients
+            sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
+
+            if (sickPawn != null)
+            {
                 if (pawn.CurJob != null)
                 {
-
-                    //if eating and we allow docs to eat, keep going
-                    if (pawn.CurJob.def == JobDefOf.Ingest && allowEating)
+                    if (pawn.jobs.curDriver.PlayerInterruptable)
                     {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is eating but player allows that, not overriding for emergency treatment");
-                        return job;
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + sickPawn.Name);
+                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, false);
                     }
-
-                    //if we're already tending keep going
-                    if (TKS_PriorityTreatment.doctorWorkDefs.Contains(pawn.CurJob.def.defName))
+                    else
                     {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is already doing a doctor job");
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": cannot interrupt job (" + pawn.CurJobDef.defName + ")");
                         return job;
+
                     }
                 }
 
-                //only go if there are patients
-                sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
-
-                if (sickPawn != null)
+                if (pawn.needs.food != null && pawn.needs.food.CurCategory >= HungerCategory.UrgentlyHungry && allowEating)
                 {
-                    if (pawn.CurJob != null)
-                    {
-                        if (pawn.jobs.curDriver.PlayerInterruptable)
-                        {
-                            TKS_PriorityTreatment.DebugMessage(callingFunction + ": interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + sickPawn.Name);
-                            pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
-                        }
-                        else
-                        {
-                            TKS_PriorityTreatment.DebugMessage(callingFunction + ": cannot interrupt job (" + pawn.CurJobDef.defName + ")");
-                            return job;
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " needs to eat, attempting to create eat job");
 
-                        }
-                    }
-
-                    if (pawn.needs.food != null && pawn.needs.food.CurCategory >= HungerCategory.UrgentlyHungry && allowEating)
-                    {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " needs to eat, attempting to create eat job");
-
-                        Thing foodSource;
-                        ThingDef foodDef;
+                    Thing foodSource;
+                    ThingDef foodDef;
 #if v1_5
-                        if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, false, FoodPreferability.MealTerrible))
+                    if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, false, FoodPreferability.MealTerrible))
 #else
-                        if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, FoodPreferability.RawTasty))
+                    if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, FoodPreferability.RawTasty))
 #endif
-                        {
-                            Job eatJob = JobMaker.MakeJob(JobDefOf.Ingest, foodSource);
-
-                            return eatJob;
-                        }
-                    }
-
-                    if (pawn.CanReserveAndReach(sickPawn, PathEndMode.OnCell, Danger.Some))
                     {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " needs treatment, attempting to treat with " + pawn.Name);
+                        float nutrition = FoodUtility.GetNutrition(pawn, foodSource, foodDef);
+                        Job eatJob = JobMaker.MakeJob(JobDefOf.Ingest, foodSource);
+                        eatJob.count = FoodUtility.WillIngestStackCountOf(pawn, foodDef, nutrition);
 
-                        Thing medicine = HealthAIUtility.FindBestMedicine(pawn, sickPawn, false);
-                        Job gotoHealJob = new Job(JobDefOf.TendPatient, sickPawn, medicine);
-                        gotoHealJob.count = Medicine.GetMedicineCountToFullyHeal(sickPawn);
-                        gotoHealJob.draftedTend = false;
-
-
-                        if (!sickPawn.InBed())
-                        {
-                            //make rescue job
-                            Building_Bed bed = RestUtility.FindPatientBedFor(sickPawn);
-                            if (bed != null)
-                            {
-                                TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " taking to bed" + pawn.Name);
-
-                                Job rescueJob = JobMaker.MakeJob(JobDefOf.Rescue, sickPawn, bed);
-                                rescueJob.count = 1;
-
-                                pawn.Reserve(sickPawn, rescueJob);
-
-                                //bed might already be reserved by Pawn
-                                if (pawn.CanReserve(bed))
-                                {
-                                    pawn.Reserve(bed, rescueJob);
-                                }
-
-                                //add tend job to queue
-                                pawn.jobs.jobQueue.EnqueueLast(gotoHealJob);
-
-                                return rescueJob;
-                            }
-                        }
-
-                        pawn.Reserve(sickPawn, gotoHealJob);
-
-                        if (!sickPawn.InBed())
-                        {
-                            TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: cannot find bed for " + sickPawn.Name + " attempting to treat on location using draftedTend");
-                            gotoHealJob.draftedTend = true;
-                        }
-                        else
-                        {
-                            TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: pawn " + sickPawn.Name + " in bed and ready for treatment");
-                        }
-
-                        treatmentComponent.tendablePawns.Remove(sickPawn);
-                        return gotoHealJob;
+                        return eatJob;
                     }
+                }
+
+                if (pawn.CanReserveAndReach(sickPawn, PathEndMode.OnCell, Danger.Some))
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " needs treatment, attempting to treat with " + pawn.Name);
+
+                    Thing medicine = HealthAIUtility.FindBestMedicine(pawn, sickPawn, false);
+
+                    Job gotoHealJob = null;
+                    if (medicine != null && medicine.SpawnedParentOrMe != medicine)
+                    {
+                        gotoHealJob = JobMaker.MakeJob(JobDefOf.TendPatient, sickPawn, medicine, medicine.SpawnedParentOrMe);
+                    } else if (medicine != null)
+                    {
+                        gotoHealJob = JobMaker.MakeJob(JobDefOf.TendPatient, sickPawn, medicine);
+                    } else {
+                        gotoHealJob = JobMaker.MakeJob(JobDefOf.TendPatient, sickPawn);
+                    };
+
+                    //gotoHealJob.count = Medicine.GetMedicineCountToFullyHeal(sickPawn);
+                    gotoHealJob.draftedTend = false;
+
+                    if (!sickPawn.InBed())
+                    {
+                        //make rescue job
+                        Building_Bed bed = RestUtility.FindBedFor(sickPawn, pawn, false, false, sickPawn.GuestStatus); ;
+                        if (bed != null)
+                        {
+                            TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " taking to bed" + pawn.Name);
+
+                            Job rescueJob = JobMaker.MakeJob(JobDefOf.Rescue, sickPawn, bed);
+                            rescueJob.count = 1;
+
+                            pawn.Reserve(sickPawn, rescueJob);
+
+                            //bed might already be reserved by Pawn
+                            if (pawn.CanReserve(bed))
+                            {
+                                pawn.Reserve(bed, rescueJob);
+                            }
+
+                            //add tend job to queue (this doesn't seem to work correctly)
+                            //pawn.jobs.jobQueue.EnqueueFirst(gotoHealJob);
+                            queuedJob = gotoHealJob;
+
+                            return rescueJob;
+                        }
+                    }
+
+                    pawn.Reserve(sickPawn, gotoHealJob);
+
+                    if (!sickPawn.InBed())
+                    {
+                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: cannot find bed for " + sickPawn.Name + " attempting to treat on location using draftedTend");
+                        gotoHealJob.draftedTend = true;
+                    }
+                    else
+                    {
+                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: pawn " + sickPawn.Name + " in bed and ready for treatment");
+                    }
+
+                    treatmentComponent.tendablePawns.Remove(sickPawn);
+                    return gotoHealJob;
                 }
             }
             return null;
@@ -569,9 +626,11 @@ namespace TKS_PriorityTreatment
         }
     }
 
+    
     [HarmonyPatch(typeof(Pawn_JobTracker))]
     static class Pawn_JobTracker_Patches
     {
+        /* depreciated and rolled into tickrare
         [HarmonyPrefix]
         [HarmonyPatch("CheckForJobOverride")]
         public static bool CheckForJobOverride_prefix(ref Pawn_JobTracker __instance)
@@ -597,38 +656,43 @@ namespace TKS_PriorityTreatment
             }
 
             //only use this method if we're resting
-            if (!(pawn.CurJobDef == JobDefOf.Wait_WithSleeping || pawn.CurJobDef == JobDefOf.Wait_Asleep || pawn.CurJobDef == JobDefOf.LayDownResting || pawn.CurJobDef == JobDefOf.LayDown))
+            if (pawn.CurJobDef == null || !(pawn.CurJobDef == JobDefOf.Wait_WithSleeping || pawn.CurJobDef == JobDefOf.Wait_Asleep || pawn.CurJobDef == JobDefOf.LayDownResting || pawn.CurJobDef == JobDefOf.LayDown))
             {
                 return true;
             }
+
             //only use this method if player settings include wake up to tend
-            if (!wakeUpToTEnd || pawn.CurJob.playerForced)
+            if (!wakeUpToTEnd || (pawn.CurJob != null && pawn.CurJob.playerForced))
             {
                 return true;
             }           
             //only continue if doctor, job is interrruptable and not doing a duty (caravan et al)
-            if (TKS_PriorityTreatment.PawnIsDoctor(pawn) && pawn.jobs.curDriver.PlayerInterruptable && pawn.mindState.duty == null)
+            if (TKS_PriorityTreatment.PawnIsDoctor(pawn) && pawn.mindState.duty == null)
             {
-                TKS_PriorityTreatment.DebugMessage("CheckForJobOverride: checking if " + pawn.Name + " needs to wake up to tend anyone");
+                if (pawn.jobs.curDriver != null && pawn.jobs.curDriver.PlayerInterruptable)
+                {
+                    TKS_PriorityTreatment.DebugMessage("CheckForJobOverride: checking if " + pawn.Name + " needs to wake up to tend anyone");
 
-                //only go if there are patients
-                Pawn sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => x != null);
+                    //only go if there are patients
+                    Pawn sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => x != null);
 
-                if (sickPawn != null ) { 
+                    if (sickPawn != null)
+                    {
 
-                    TKS_PriorityTreatment.DebugMessage("CheckForJobOverride: waking up " + pawn.Name + " because " + sickPawn.Name + " needs treatment");
+                        TKS_PriorityTreatment.DebugMessage("CheckForJobOverride: waking up " + pawn.Name + " because " + sickPawn.Name + " needs treatment");
 
-                    pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
+                        pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
 
-                    //Job gotoHealJob = new Job(JobDefOf.TendPatient, sickPawn);
+                        //Job gotoHealJob = new Job(JobDefOf.TendPatient, sickPawn);
 
-                    //always perform core actions as well
-                    return true;
+                        //always perform core actions as well
+                        return true;
+                    }
                 }
             }
             return true;
-        }
-        
+        }*/
+
         [HarmonyPrefix]
         [HarmonyPatch("TryFindAndStartJob")]
         public static bool TryFindAndStartJob_prefix(ref Pawn_JobTracker __instance)
@@ -646,15 +710,26 @@ namespace TKS_PriorityTreatment
                 return true;
             }
 
-            Pawn sickPawn = null;
+            if (!TKS_PriorityTreatment.PawnIsDoctor(pawn, "TryFindAndStartJob"))
+            {
+                return true;
+            }
 
-            Job tendJob = TKS_PriorityTreatment.MakePriorityTreatmentJob(pawn, out sickPawn);
+            Pawn sickPawn = null;
+            Job queuedJob = null;
+
+            Job tendJob = TKS_PriorityTreatment.MakePriorityTreatmentJob(pawn, out sickPawn, out queuedJob);
 
             if (tendJob != null)
             {
                 MapComponent_PriorityTreatment treatmentComponent = pawn.Map?.GetComponent<MapComponent_PriorityTreatment>();
                 treatmentComponent.tendablePawns.Remove(sickPawn);
                 __instance.StartJob(tendJob, JobCondition.InterruptOptional, null, false, false, null, null, false, false, null, false, true);
+                if (queuedJob != null)
+                {
+                    pawn.jobs.jobQueue.EnqueueFirst(queuedJob);
+                }
+                TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: " + pawn.Name + " has " + pawn.jobs.jobQueue.Count + " jobs in their queue");
                 return false;
             }
             return true;
@@ -679,19 +754,49 @@ namespace TKS_PriorityTreatment
                 return true;
             }
 
-            Pawn sickPawn = null;
+            if (!TKS_PriorityTreatment.PawnIsDoctor(__instance, "TickRare"))
+            {
+                return true;
+            }
 
-            Job tendJob = TKS_PriorityTreatment.MakePriorityTreatmentJob(__instance, out sickPawn, "TickRare");
+            //do sleep wakeup first
+            if (__instance.CurJobDef == null && (__instance.CurJobDef == JobDefOf.Wait_WithSleeping || __instance.CurJobDef == JobDefOf.Wait_Asleep || __instance.CurJobDef == JobDefOf.LayDownResting || __instance.CurJobDef == JobDefOf.LayDown))
+            {
+                bool wakeUpToTend = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().wakeUpToTend;
+                //only use this method if player settings include wake up to tend
+                if (!wakeUpToTend)
+                {
+                    return true;
+                }
+            }
+
+            //here if sleeping or performing any other task
+            Pawn sickPawn = null;
+            Job queuedJob = null;
+
+            Job tendJob = TKS_PriorityTreatment.MakePriorityTreatmentJob(__instance, out sickPawn, out queuedJob, "TickRare");
 
             if (tendJob != null)
             {
                 MapComponent_PriorityTreatment treatmentComponent = __instance.Map?.GetComponent<MapComponent_PriorityTreatment>();
                 treatmentComponent.tendablePawns.Remove(sickPawn);
                 __instance.jobs.StartJob(tendJob, JobCondition.InterruptOptional, null, false, false, null, null, false, false, null, false, true);
+                if (queuedJob != null)
+                {
+                    __instance.jobs.jobQueue.EnqueueFirst(queuedJob);
+                }
+                TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: " + __instance.Name + " has " + __instance.jobs.jobQueue.Count + " jobs in their queue");
+
                 //always run main method here
                 return true;
             }
             return true;
         }
+    }
+
+    [HarmonyPatch(typeof(WorkGiver_DoBill))]
+    static class WorkGiver_DoBill_patches
+    {
+        [HarmonyPatch(typeof(WorkGiver_DoBill))]
     }
 }
