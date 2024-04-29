@@ -10,4 +10,7 @@
 	<TKSAllowEating>Allow doctors to eat</TKSAllowEating>
 	<TKSAllowEatingToolTip>If this box is un-checked, doctors will continue doing emergency treatment instead of feeding themselves (take care of your doctors!)</TKSAllowEatingToolTip>
 	<TKSDebugPrint>Toggle to show extra debug info in the logs.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0} will not perform surgery while injured (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Allow injured pawns to perform surgery.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Toggle to block injured pawns from performing surgery, will wait until they are healthy again.</TKSAllowInjuredSurgeryTooltip>
 </LanguageData>
