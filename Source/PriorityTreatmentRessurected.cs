@@ -290,7 +290,7 @@ namespace TKS_PriorityTreatment
 #if v1_4
         //this fallback list includes included jobDefOfs
         public static List<string> doctorWorkDefs = new List<string> { "Rescue", "TendPatient", "DeliverToBed", "TakeWoundedPrisonerToBed", "TakeDownedPawnToBedDrafted" };
-#elif v1_5
+#else
         //this fallback list includes included jobDefOfs
         public static List<string> doctorWorkDefs = new List<string> { "Rescue", "TendPatient", "DeliverToBed", "TakeWoundedPrisonerToBed", "TakeDownedPawnToBedDrafted", "TendEntity" };
 #endif
@@ -324,10 +324,10 @@ namespace TKS_PriorityTreatment
 
         public static bool CanRescueNowByPlayer(Pawn patient)
         {
-#if v1_5
-            return (HealthAIUtility.WantsToBeRescued(patient) && !patient.IsForbidden(Faction.OfPlayer) && !GenAI.EnemyIsNear(patient, 25f, false));
-#else
+#if v1_4
             return (!patient.IsForbidden(Faction.OfPlayer) && patient.Downed && HealthAIUtility.WantsToBeRescuedIfDowned(patient));
+#else
+            return (HealthAIUtility.WantsToBeRescued(patient) && !patient.IsForbidden(Faction.OfPlayer) && !GenAI.EnemyIsNear(patient, 25f, false));
 #endif
         }
 
@@ -476,10 +476,10 @@ namespace TKS_PriorityTreatment
 
                     Thing foodSource;
                     ThingDef foodDef;
-#if v1_5
-                    if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, false, FoodPreferability.MealTerrible))
-#else
+#if v1_4
                     if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, FoodPreferability.RawTasty))
+#else
+                    if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, false, out foodSource, out foodDef, false, true, true, false, false, false, false, false, false, false, false, FoodPreferability.MealTerrible))                   
 #endif
                     {
                         float nutrition = FoodUtility.GetNutrition(pawn, foodSource, foodDef);
@@ -761,7 +761,7 @@ namespace TKS_PriorityTreatment
                 Bill_Medical bill_Medical;
                 if ((bill_Medical = (bill as Bill_Medical)) != null)
                 {
-                    if (pawn.health.hediffSet.GetInjuredParts().Count != 0)
+                    if (pawn.health.hediffSet.GetNaturallyHealingInjuredParts().Count != 0)
                     {
                         JobFailReason.Is("NotOperatingWithInjuries".Translate(pawn.Name), bill.Label);
                         //__instance.chosenIngThings.Clear();

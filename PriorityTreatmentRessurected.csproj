@@ -38,6 +38,16 @@
     <ErrorReport>prompt</ErrorReport>
     <DefineConstants>v1_5</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '1.6|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>1.6\Assemblies\</OutputPath>
+    <DefineConstants>v1_6</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Source\PriorityTreatmentRessurected.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -45,6 +55,7 @@
   <ItemGroup>
     <Content Include="1.5\Languages\English\Keyed\keys.xml" />
     <Content Include="1.4\Languages\English\Keyed\keys.xml" />
+    <Content Include="1.6\Languages\English\Keyed\keys.xml" />
     <Content Include="About\About.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +63,7 @@
     <Folder Include="1.4\Defs\" />
     <Folder Include="1.4\Patches\" />
     <Folder Include="1.5\Defs\" />
+    <Folder Include="1.6\Defs\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
