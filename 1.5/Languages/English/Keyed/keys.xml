@@ -15,4 +15,6 @@
 	<TKSAllowInjuredSurgeryTooltip>Toggle to block injured pawns from performing surgery, will wait until they are healthy again.</TKSAllowInjuredSurgeryTooltip>
 	<TKSTendEntities>Tend entities as emergencies</TKSTendEntities>
 	<TKSTendEntitiesToolTip>Check this for your doctors to also drop what they are doing to tend entities held on holding platforms. Entities are only tended when no colonist, prisoner or animal needs the doctor. Requires Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Carry downed animals to a bed up to {0} cells away</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>A downed animal is carried to a bed before being tended, unless the nearest free bed is further away than this (in a straight line). Beyond that distance the doctor tends it where it lies, so it does not bleed out on the way. Set to 0 to always tend downed animals where they lie. Does not affect people, who are always carried to a bed.</TKSAnimalRescueMaxDistanceToolTip>
 </LanguageData>

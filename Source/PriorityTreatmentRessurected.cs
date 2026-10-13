@@ -229,6 +229,8 @@ namespace TKS_PriorityTreatment
         public bool debugPrint = false;
         public bool injuredSurgery = true;
         public bool tendEntities = false;
+        public int animalRescueMaxDistance = 50;
+        public bool animalRescuePathfinding = false;
 
         public override void ExposeData()
         {
@@ -239,6 +241,8 @@ namespace TKS_PriorityTreatment
             Scribe_Values.Look(ref debugPrint, "debugPrint");
             Scribe_Values.Look(ref injuredSurgery, "injuredSurgery");
             Scribe_Values.Look(ref tendEntities, "tendEntities");
+            Scribe_Values.Look(ref animalRescueMaxDistance, "animalRescueMaxDistance", 50);
+            Scribe_Values.Look(ref animalRescuePathfinding, "animalRescuePathfinding");
 
             base.ExposeData();
         }
@@ -664,11 +668,15 @@ namespace TKS_PriorityTreatment
                     Job gotoHealJob = TKS_PriorityTreatment.MakeTendJob(pawn, sickPawn);
                     gotoHealJob.draftedTend = false;
 
-                    if (!sickPawn.InBed())
+                    //only a downed patient can be carried - vanilla fails a rescue job on anyone else as soon as it starts
+                    //(ie a wounded animal asleep on the ground is tended where it lies, below)
+                    if (!sickPawn.InBed() && sickPawn.Downed)
                     {
                         //make rescue job
                         Building_Bed bed = RestUtility.FindBedFor(sickPawn, pawn, false, false, sickPawn.GuestStatus); ;
-                        if (bed != null)
+
+                        //a downed humanlike is always carried to the bed. a downed animal is too, unless the bed is far enough away that it is better tended where it lies
+                        if (bed != null && !TKS_PriorityTreatment.TooFarToCarry(pawn, sickPawn, bed))
                         {
                             TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " taking to bed" + pawn.Name);
 
@@ -685,7 +693,7 @@ namespace TKS_PriorityTreatment
 
                     if (!sickPawn.InBed())
                     {
-                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: cannot find bed for " + sickPawn.Name + " attempting to treat on location using draftedTend");
+                        TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: " + sickPawn.Name + " is not in a bed and is not being carried to one, attempting to treat on location using draftedTend");
                         gotoHealJob.draftedTend = true;
                     }
                     else
@@ -699,6 +707,62 @@ namespace TKS_PriorityTreatment
             }
             return null;
         }
+
+        //is this bed too far to carry a downed animal to (it may bleed out on the way). never true for a humanlike
+        //only called once a downed patient outside a bed has had a bed found for them, and the humanlike test comes first, so the distance is rarely worked out
+        public static bool TooFarToCarry(Pawn doctor, Pawn patient, Building_Bed bed)
+        {
+            if (patient.RaceProps.Humanlike) { return false; }
+
+            TKS_PriorityTreatmentSettings settings = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>();
+            int maxDistance = settings.animalRescueMaxDistance;
+            IntVec3 offset = patient.Position - bed.Position;
+            bool tooFar;
+
+#if v1_4 || v1_5
+            //the pathfinder is called differently before 1.6, so these versions always measure in a straight line, whatever the setting says
+            //straight line distance in cells, compared squared so no square root is needed
+            tooFar = offset.LengthHorizontalSquared > maxDistance * maxDistance;
+#else
+            if (!settings.animalRescuePathfinding)
+            {
+                //straight line distance in cells, compared squared so no square root is needed
+                tooFar = offset.LengthHorizontalSquared > maxDistance * maxDistance;
+            }
+            else if (Mathf.Max(Mathf.Abs(offset.x), Mathf.Abs(offset.z)) > maxDistance)
+            {
+                //a route moves at most one cell along each axis per step, so it can never be shorter than the larger of the two offsets
+                //if that alone is over the limit there is no need to run the pathfinder
+                tooFar = true;
+            }
+            else
+            {
+                tooFar = TKS_PriorityTreatment.PathLength(doctor, patient.Position, bed) > maxDistance;
+            }
+#endif
+
+            if (tooFar)
+            {
+                TKS_PriorityTreatment.DebugMessage("TooFarToCarry: bed for " + patient.LabelShort + " is more than " + maxDistance + " cells away, tending where it lies");
+            }
+
+            return tooFar;
+        }
+
+#if !(v1_4 || v1_5)
+        //how many cells the doctor would walk to get from the start cell to the destination, using the game's pathfinder (1.6 and later only)
+        //returns int.MaxValue when there is no route at all
+        public static int PathLength(Pawn doctor, IntVec3 start, Thing destination)
+        {
+            PawnPath path = doctor.Map.pathFinder.FindPathNow(start, destination, doctor, peMode: PathEndMode.Touch);
+            int length = path.Found ? path.NodesLeftCount : int.MaxValue;
+
+            //paths come from a pool and have to be handed back
+            path.ReleaseToPool();
+
+            return length;
+        }
+#endif
 
         //try the job's own reservations before it is started, so a doctor is only pulled off what they are doing for a job that can begin
         //the reservations are released again straight away - StartJob makes them for real
@@ -793,6 +857,12 @@ namespace TKS_PriorityTreatment
             {
                 listingStandard.CheckboxLabeled("TKSTendEntities".Translate(), ref settings.tendEntities, "TKSTendEntitiesToolTip".Translate());
             }
+#endif
+
+            listingStandard.Label("TKSAnimalRescueMaxDistance".Translate(settings.animalRescueMaxDistance), -1f, "TKSAnimalRescueMaxDistanceToolTip".Translate());
+            settings.animalRescueMaxDistance = Mathf.RoundToInt(listingStandard.Slider(settings.animalRescueMaxDistance, 0f, 250f));
+#if !(v1_4 || v1_5)
+            listingStandard.CheckboxLabeled("TKSAnimalRescuePathfinding".Translate(), ref settings.animalRescuePathfinding, "TKSAnimalRescuePathfindingToolTip".Translate());
 #endif
 
             //listingStandard.Label("TKSDocPriorityToolTip".Translate(), -1, "TKSDocPriorityToolTip".Translate());
