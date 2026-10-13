@@ -14,20 +14,6 @@ namespace TKS_PriorityTreatment
     [StaticConstructorOnStartup]
     public static class InsertHarmony
     {
-        public static Type TypeByName(string name)
-        {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var tt = assembly.GetType(name);
-                if (tt != null)
-                {
-                    return tt;
-                }
-            }
-
-            return null;
-        }
-
         static InsertHarmony()
         {
             Harmony harmony = new Harmony("TKS_PriorityTreatment");
@@ -35,68 +21,46 @@ namespace TKS_PriorityTreatment
             harmony.PatchAll();
             // Harmony.DEBUG = false;
 
-            var myPatchedMethods = harmony.GetPatchedMethods();
-            bool anyConflict = false;
-            foreach (MethodBase method in myPatchedMethods)
-            {
-                if (method is null) { continue; };
-                Log.Message("checking " + method.ReflectedType.Name + "." + method.Name + " for other harmony patches");
-                MethodInfo original = method.ReflectedType.GetMethod(method.Name);
-
-                if (original is null)
-                {
-                    Type containingType = TypeByName(method.ReflectedType.Name);
-                    original = containingType?.GetMethod(method.Name);
-
-                    if (original is null)
-                    {
-                        Log.Message("could not find original method through ReflectedType or TypeByName(" + method.ReflectedType.Name + "), continuing");
-                    }
-                    continue;
-                }
-
-                Patches patches = Harmony.GetPatchInfo(original);
-
-                if (!(patches is null))
-                {
-                    //Log.Message("found patches from " + patches.Owners.ToCommaList());
-
-                    foreach (var patch in patches.Prefixes)
-                    {
-                        if (patch != null && patch.owner != harmony.Id)
-                        {
-                            anyConflict = true;
-                            Log.Warning("TKS_PriorityTreatment: found other prefixes for method " + method.Name + ": " + patch.owner);
-                        }
-                    }
-                    foreach (var patch in patches.Postfixes)
-                    {
-                        if (patch != null && patch.owner != harmony.Id)
-                        {
-                            anyConflict = true;
-                            Log.Warning("TKS_PriorityTreatment: found other postfixes for method " + method.Name + ": " + patch.owner);
-                        }
-                    }
-                    foreach (var patch in patches.Transpilers)
-                    {
-                        if (patch != null && patch.owner != harmony.Id)
-                        {
-                            anyConflict = true;
-                            Log.Warning("TKS_PriorityTreatment: found other transpilers for method " + method.Name + ": " + patch.owner);
-                        }
-                    }
-                }
-
-            }
-            if (anyConflict)
-            {
-                Log.Warning("TKS_PriorityTreatment: harmony conflicts detected, please report mods if things are acting up");
-
-            }
-
             TKS_PriorityTreatment.AddModdedDoctorWorkDefs();
 
+            //only with debug logging on - sharing a method with another mod is normal and usually harmless, so this is not shown to everyone
+            if (LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().debugPrint)
+            {
+                ReportSharedPatches(harmony);
+            }
+
             Log.Message("TKS_PriorityTreatment: Patching finished");
+        }
+
+        //list the other mods that patch the same methods as this one - information for troubleshooting, not an error
+        private static void ReportSharedPatches(Harmony harmony)
+        {
+            foreach (MethodBase method in harmony.GetPatchedMethods())
+            {
+                if (method is null) { continue; }
+
+                Patches patches = Harmony.GetPatchInfo(method);
+
+                if (patches is null) { continue; }
+
+                string methodName = method.DeclaringType.Name + "." + method.Name;
+
+                ReportOtherOwners(harmony, methodName, "prefix", patches.Prefixes);
+                ReportOtherOwners(harmony, methodName, "postfix", patches.Postfixes);
+                ReportOtherOwners(harmony, methodName, "transpiler", patches.Transpilers);
+                ReportOtherOwners(harmony, methodName, "finalizer", patches.Finalizers);
+            }
+        }
+
+        private static void ReportOtherOwners(Harmony harmony, string methodName, string patchType, IEnumerable<Patch> patchList)
+        {
+            foreach (Patch patch in patchList)
+            {
+                if (patch != null && patch.owner != harmony.Id)
+                {
+                    Log.Message("TKS_PriorityTreatment: " + methodName + " also has a " + patchType + " from " + patch.owner);
+                }
+            }
         }
     }
 
