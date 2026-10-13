@@ -122,6 +122,7 @@ namespace TKS_PriorityTreatment
                 //rebuild both lists from scratch, which also drops anyone healed or removed since the last check
                 this.tendablePawns = SomeoneNeedsTreatment();
                 this.tendablePlatforms = EntitiesNeedTreatment();
+                TKS_PriorityTreatment.NotifyScanFinished(this.map, this.tendablePawns.Count > 0 || this.tendablePlatforms.Count > 0);
 
                 this.ticks = 0;
             }
@@ -183,6 +184,14 @@ namespace TKS_PriorityTreatment
 
             this.tendablePawns = SomeoneNeedsTreatment();
             this.tendablePlatforms = EntitiesNeedTreatment();
+            TKS_PriorityTreatment.NotifyScanFinished(this.map, this.tendablePawns.Count > 0 || this.tendablePlatforms.Count > 0);
+        }
+
+        public override void MapRemoved()
+        {
+            base.MapRemoved();
+
+            TKS_PriorityTreatment.ForgetMap(this.map);
         }
 
         private List<Thing> EntitiesNeedTreatment()
@@ -238,6 +247,51 @@ namespace TKS_PriorityTreatment
     public class TKS_PriorityTreatment : Mod
     {
         TKS_PriorityTreatmentSettings settings;
+
+        //the maps whose last scan found someone to tend. while this is empty nobody on any map is waiting for a doctor,
+        //so both pawn patches can leave on their first line instead of working out whether each pawn is a doctor
+        //the patient lists are only ever filled by a scan, and every scan reports here straight afterwards - so this can lag behind a patient
+        //who has since been treated (harmless, the normal checks then run), but it is never empty while a list has someone on it
+        private static readonly HashSet<Map> mapsWithPatients = new HashSet<Map>();
+
+        //which game the record above belongs to, so no map carries over when another save is loaded
+        private static Game patientsRecordedForGame;
+
+        public static bool AnyPatientsListed
+        {
+            get
+            {
+                return mapsWithPatients.Count > 0;
+            }
+        }
+
+        public static void NotifyScanFinished(Map map, bool hasPatients)
+        {
+            if (Current.Game != patientsRecordedForGame)
+            {
+                mapsWithPatients.Clear();
+                patientsRecordedForGame = Current.Game;
+            }
+
+            if (map == null) { return; }
+
+            if (hasPatients)
+            {
+                mapsWithPatients.Add(map);
+            }
+            else
+            {
+                mapsWithPatients.Remove(map);
+            }
+        }
+
+        //maps come and go during play (caravan encounters, quest sites) - drop one as soon as the game removes it
+        public static void ForgetMap(Map map)
+        {
+            if (map == null) { return; }
+
+            mapsWithPatients.Remove(map);
+        }
 
         //is the debug logging setting on. the busiest call sites check this before building their message,
         //because the text is otherwise put together (pawn names and all) even when it is about to be thrown away
@@ -765,6 +819,12 @@ namespace TKS_PriorityTreatment
             //so even if we rareTick interrupt the doctor for a tend job, they wont necessarily take one (if they have needs to fulfill)
             //so we'll check to see if the pawn is a doctor, and then check if we should override the current job with a tend job
 
+            //cheapest check first - this runs for every pawn on every job search, and most of the time nobody needs a doctor
+            if (!TKS_PriorityTreatment.AnyPatientsListed)
+            {
+                return true;
+            }
+
             //___pawn is the job tracker's own (non-public) pawn field, handed over by harmony - no reflection needed on each call
             Pawn pawn = ___pawn;
 
@@ -829,6 +889,12 @@ namespace TKS_PriorityTreatment
 
             // this is the primary doctor intterupt function - run rarely, check for patients
             // if any can be tended, stop what you're doing and tend them
+
+            //cheapest check first - this runs for every pawn, and most of the time nobody needs a doctor
+            if (!TKS_PriorityTreatment.AnyPatientsListed)
+            {
+                return true;
+            }
 
             //end if not colonist/player controlled
             if (!(__instance.IsColonistPlayerControlled || __instance.IsColonyMechPlayerControlled))
