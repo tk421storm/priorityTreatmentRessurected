@@ -907,29 +907,58 @@ namespace TKS_PriorityTreatment
             return typeof(WorkGiver_DoBill).GetMethod("StartOrResumeBillJob", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
+        //true while the game is working out a bill job the player directly ordered (right click > prioritize)
+        public static bool forcedByPlayer = false;
+
+        //this method is where vanilla walks the bill stack, and the only place it knows whether the player forced the job
+        //so remember that here for the per-bill check below
         [HarmonyPrefix]
-        public static bool StartOrResumeBillJob_prefix(WorkGiver_DoBill __instance, Pawn pawn, IBillGiver giver, bool forced)
+        public static void StartOrResumeBillJob_prefix(bool forced)
         {
+            forcedByPlayer = forced;
+        }
+
+        //a finalizer runs even if the method throws, so the flag can never be left on
+        [HarmonyFinalizer]
+        public static void StartOrResumeBillJob_finalizer()
+        {
+            forcedByPlayer = false;
+        }
+    }
+
+    //the "only healthy surgeons operate" block. vanilla asks each medical bill in turn whether this pawn may start it,
+    //so blocking here is per bill - an exempt bill is not held up by another bill on the same patient
+    [HarmonyPatch(typeof(Bill_Medical), "PawnAllowedToStartAnew")]
+    static class Bill_Medical_Patches
+    {
+        [HarmonyPostfix]
+        public static void PawnAllowedToStartAnew_postfix(Bill_Medical __instance, Pawn pawn, ref bool __result)
+        {
+            //checks are ordered cheapest first
+
+            //vanilla has already said no
+            if (!__result) { return; }
+
+            //a direct order from the player always goes ahead
+            if (WorkGiver_DoBill_patches.forcedByPlayer) { return; }
+
             bool injuredSurgery = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().injuredSurgery;
 
-            if (injuredSurgery) { return true; }
+            if (injuredSurgery) { return; }
 
-            for (int i = 0; i < giver.BillStack.Count; i++)
+            //giving a patient a drug, food or item is not surgery
+            RecipeWorker worker = __instance.recipe.Worker;
+#if v1_4
+            if (worker is Recipe_AdministerIngestible) { return; }
+#else
+            if (worker is Recipe_AdministerIngestible || worker is Recipe_AdministerUsableItem) { return; }
+#endif
+
+            if (pawn.health.hediffSet.GetNaturallyHealingInjuredParts().Count != 0)
             {
-                Bill bill = giver.BillStack[i];
-                Bill_Medical bill_Medical;
-                if ((bill_Medical = (bill as Bill_Medical)) != null)
-                {
-                    if (pawn.health.hediffSet.GetNaturallyHealingInjuredParts().Count != 0)
-                    {
-                        JobFailReason.Is("NotOperatingWithInjuries".Translate(pawn.Name), bill.Label);
-                        //__instance.chosenIngThings.Clear();
-                        return false;
-                    }
-                }
+                JobFailReason.Is("NotOperatingWithInjuries".Translate(pawn.Name), __instance.Label);
+                __result = false;
             }
-
-            return true;
         }
     }
 }
