@@ -114,7 +114,10 @@ namespace TKS_PriorityTreatment
             base.MapComponentTick();
             if (this.ticks >= 300)
             {
-                TKS_PriorityTreatment.DebugMessage("MapComponentTick: checking for treatable pawns");
+                if (TKS_PriorityTreatment.DebugOn)
+                {
+                    TKS_PriorityTreatment.DebugMessage("MapComponentTick: checking for treatable pawns");
+                }
 
                 //rebuild both lists from scratch, which also drops anyone healed or removed since the last check
                 this.tendablePawns = SomeoneNeedsTreatment();
@@ -165,7 +168,10 @@ namespace TKS_PriorityTreatment
                     }
                 }
             }
-            TKS_PriorityTreatment.DebugMessage("MapComponent: found " + tendablePawns.Count + " pawns to tend on map " + this.map);
+            if (TKS_PriorityTreatment.DebugOn)
+            {
+                TKS_PriorityTreatment.DebugMessage("MapComponent: found " + tendablePawns.Count + " pawns to tend on map " + this.map);
+            }
 
             return tendablePawns;
         }
@@ -233,9 +239,19 @@ namespace TKS_PriorityTreatment
     {
         TKS_PriorityTreatmentSettings settings;
 
+        //is the debug logging setting on. the busiest call sites check this before building their message,
+        //because the text is otherwise put together (pawn names and all) even when it is about to be thrown away
+        public static bool DebugOn
+        {
+            get
+            {
+                return LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().debugPrint;
+            }
+        }
+
         public static void DebugMessage(string message)
         {
-            if (LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().debugPrint)
+            if (TKS_PriorityTreatment.DebugOn)
             {
                 Log.Message(message);
             }
@@ -464,7 +480,10 @@ namespace TKS_PriorityTreatment
             //dont stop if doing a duty (caravan)
             if (pawn.mindState?.duty != null)
             {
-                TKS_PriorityTreatment.DebugMessage(callingFunction + ": not overriding as pawn is doing duty " + pawn.mindState.duty.def.defName);
+                if (TKS_PriorityTreatment.DebugOn)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": not overriding as pawn is doing duty " + pawn.mindState.duty.def.defName);
+                }
                 return job;
             }
 
@@ -475,21 +494,30 @@ namespace TKS_PriorityTreatment
                 //allow player forced jobs (queues dont seem to work at this stage)
                 if (pawn.CurJob.playerForced)
                 {
-                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is performing player-set job, not overriding for emergency treatment");
+                    if (TKS_PriorityTreatment.DebugOn)
+                    {
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is performing player-set job, not overriding for emergency treatment");
+                    }
                     return job;
                 }
 
                 //if eating and we allow docs to eat, keep going
                 if (pawn.CurJob.def == JobDefOf.Ingest && allowEating)
                 {
-                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is eating but player allows that, not overriding for emergency treatment");
+                    if (TKS_PriorityTreatment.DebugOn)
+                    {
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is eating but player allows that, not overriding for emergency treatment");
+                    }
                     return job;
                 }
 
                 //if we're already tending keep going
                 if (TKS_PriorityTreatment.doctorWorkDefs.Contains(pawn.CurJob.def.defName))
                 {
-                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is already doing a doctor job");
+                    if (TKS_PriorityTreatment.DebugOn)
+                    {
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is already doing a doctor job");
+                    }
                     return job;
                 }
 
@@ -667,7 +695,10 @@ namespace TKS_PriorityTreatment
                 {
                     if (pawn.health.State == PawnHealthState.Mobile && !pawn.Drafted && !pawn.InMentalState)
                     {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": " + pawn.Name + " is an available doctor");
+                        if (TKS_PriorityTreatment.DebugOn)
+                        {
+                            TKS_PriorityTreatment.DebugMessage(callingFunction + ": " + pawn.Name + " is an available doctor");
+                        }
                         return true;
 
                     }
