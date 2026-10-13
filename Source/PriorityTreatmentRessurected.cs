@@ -727,14 +727,15 @@ namespace TKS_PriorityTreatment
 
         [HarmonyPrefix]
         [HarmonyPatch("TryFindAndStartJob")]
-        public static bool TryFindAndStartJob_prefix(ref Pawn_JobTracker __instance)
+        public static bool TryFindAndStartJob_prefix(ref Pawn_JobTracker __instance, Pawn ___pawn)
         {
 
             //this function is patched because it's this function that returns recreation jobs (and other think jobs that supercede tending)
             //so even if we rareTick interrupt the doctor for a tend job, they wont necessarily take one (if they have needs to fulfill)
             //so we'll check to see if the pawn is a doctor, and then check if we should override the current job with a tend job
 
-            Pawn pawn = Traverse.Create(__instance).Field("pawn").GetValue<Pawn>();
+            //___pawn is the job tracker's own (non-public) pawn field, handed over by harmony - no reflection needed on each call
+            Pawn pawn = ___pawn;
 
             //end if not colonist/player controlled
             if (!(pawn.IsColonistPlayerControlled || pawn.IsColonyMechPlayerControlled))
