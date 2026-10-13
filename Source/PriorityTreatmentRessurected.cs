@@ -151,22 +151,7 @@ namespace TKS_PriorityTreatment
             {
                 TKS_PriorityTreatment.DebugMessage("MapComponentTick: checking for treatable pawns");
 
-
-                //cleanup in case other pawns healed or removed
-                List<Pawn> removeThese = new List<Pawn>();
-                foreach (Pawn sickPawn in this.tendablePawns)
-                {
-                    if (!TKS_PriorityTreatment.HasTendableHediff(sickPawn))
-                    {
-                        removeThese.Add(sickPawn);
-                    }
-                }
-
-                foreach (Pawn healthyPawn in removeThese)
-                {
-                    this.tendablePawns.Remove(healthyPawn);
-                }
-
+                //rebuild both lists from scratch, which also drops anyone healed or removed since the last check
                 this.tendablePawns = SomeoneNeedsTreatment();
                 this.tendablePlatforms = EntitiesNeedTreatment();
 
