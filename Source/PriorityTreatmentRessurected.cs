@@ -95,6 +95,8 @@ namespace TKS_PriorityTreatment
 
             }
 
+            TKS_PriorityTreatment.AddModdedDoctorWorkDefs();
+
             Log.Message("TKS_PriorityTreatment: Patching finished");
         }
     }
@@ -288,6 +290,17 @@ namespace TKS_PriorityTreatment
         public static List<string> doctorWorkDefs = new List<string> { "Rescue", "TendPatient", "DeliverToBed", "TakeWoundedPrisonerToBed", "TakeDownedPawnToBedDrafted", "TendEntity" };
 #endif
 
+        //called once at startup - adds other mods' jobs to the doctor work list, only when that mod is active
+        public static void AddModdedDoctorWorkDefs()
+        {
+            //Vanilla Races Expanded - Android has its own jobs for working on androids (they are not medical bills, so the surgery check does not see them)
+            if (ModLister.GetActiveModWithIdentifier("vanillaracesexpanded.android", true) != null)
+            {
+                TKS_PriorityTreatment.doctorWorkDefs.AddRange(new string[] { "VREA_CreateAndroid", "VREA_ModifyAndroid", "VREA_ReplaceReactor", "VREA_RepairAndroid" });
+                TKS_PriorityTreatment.DebugMessage("AddModdedDoctorWorkDefs: Vanilla Races Expanded - Android is active, its android jobs will not be interrupted");
+            }
+        }
+
         public static IEnumerable<Thing> PotentialPatientsGlobal(Map map)
         {
             List<Pawn> animals = new List<Pawn>();
@@ -409,6 +422,9 @@ namespace TKS_PriorityTreatment
             return false;
         }
 
+        //the name vanilla gives the toil in a bill job where the work itself is done (Toils_Recipe.DoRecipeWork) - for a medical bill, the operation
+        public const string recipeWorkToilName = "DoRecipeWork";
+
         private static readonly WorkGiver_Tend tendWorkGiver = new WorkGiver_TendOther();
 
         //build the tend job through the vanilla work giver, so mods that patch it (smart medicine sets the medicine count there) still apply
@@ -511,6 +527,15 @@ namespace TKS_PriorityTreatment
                 if (TKS_PriorityTreatment.doctorWorkDefs.Contains(pawn.CurJob.def.defName))
                 {
                     TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is already doing a doctor job");
+                    return job;
+                }
+
+                //a surgery (or any other medical bill) is only protected while the doctor is actually operating - the work done so far is lost if that is interrupted
+                //travelling to the patient and fetching medicine or parts can still be interrupted
+                //checks are ordered cheapest first, so most jobs drop out on the first comparison
+                if (pawn.CurJob.def == JobDefOf.DoBill && pawn.CurJob.bill is Bill_Medical && pawn.jobs.curDriver.CurToilString == TKS_PriorityTreatment.recipeWorkToilName)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is operating (" + pawn.CurJob.bill.Label + "), not overriding for emergency treatment");
                     return job;
                 }
             }
