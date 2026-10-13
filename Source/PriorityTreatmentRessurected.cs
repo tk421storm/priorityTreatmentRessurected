@@ -6,7 +6,6 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
-using HugsLib.Settings;
 
 
 namespace TKS_PriorityTreatment
