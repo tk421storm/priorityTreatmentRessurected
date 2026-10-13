@@ -743,7 +743,8 @@ namespace TKS_PriorityTreatment
 
                 //check is assigned to doctoring
                 int medPriority = pawn.workSettings.GetPriority(WorkTypeDefOf.Doctor);
-                int reqDocPriority = TKS_PriorityTreatment.RequiredDocPriority;
+                //the player cannot set a priority on a mech (the game gives it 3), so for anything that is not humanlike any active doctor work counts
+                int reqDocPriority = pawn.RaceProps.Humanlike ? TKS_PriorityTreatment.RequiredDocPriority : Pawn_WorkSettings.LowestPriority;
 
                 if (medPriority != 0 && medPriority <= reqDocPriority)
                 {
