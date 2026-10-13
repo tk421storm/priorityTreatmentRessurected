@@ -503,8 +503,29 @@ namespace TKS_PriorityTreatment
                 }
             }
 
-            //only go if there are patients
-            sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
+            //a doctor resting in bed who is already someone else's patient stays put - getting up would break the other doctor's job
+            //note: the other doctor only reserves this pawn once their tend job has started, so there is a small window where this pawn's check
+            //can run first and they still get up. may need more code here down the line (ie tracking which patients have been assigned a doctor)
+            if (pawn.InBed())
+            {
+                Pawn reserver = pawn.Map.reservationManager.FirstRespectedReserver(pawn, pawn);
+                if (reserver != null && reserver != pawn)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": doctor " + pawn.Name + " is in bed and reserved by " + reserver.Name + ", not getting up");
+                    return job;
+                }
+            }
+
+            //only go if there are patients - the doctor themself comes first, but only if the player has turned self-tend on for them (the tend job fails otherwise)
+            bool canSelfTend = pawn.playerSettings != null && pawn.playerSettings.selfTend;
+            if (canSelfTend && treatmentComponent.tendablePawns.Contains(pawn) && pawn.CanReserveAndReach(pawn, PathEndMode.OnCell, Danger.Some))
+            {
+                sickPawn = pawn;
+            }
+            else
+            {
+                sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => x != pawn && pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
+            }
 
             //entities come last, only when no pawn needs this doctor
             Thing sickPlatform = null;
