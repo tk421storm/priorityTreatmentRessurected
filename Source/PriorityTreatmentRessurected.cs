@@ -642,6 +642,9 @@ namespace TKS_PriorityTreatment
                         Job eatJob = JobMaker.MakeJob(JobDefOf.Ingest, foodSource);
                         eatJob.count = FoodUtility.WillIngestStackCountOf(pawn, foodDef, nutrition);
 
+                        //this doctor is not taking the patient after all - clear it so the caller leaves them on the list for another doctor
+                        sickPawn = null;
+
                         return eatJob;
                     }
                 }
