@@ -515,19 +515,11 @@ namespace TKS_PriorityTreatment
 
             if (sickPawn != null || sickPlatform != null)
             {
-                if (pawn.CurJob != null)
+                //the current job is not ended here - StartJob ends it, and only once we know the new job can start
+                if (pawn.CurJob != null && !pawn.jobs.curDriver.PlayerInterruptable)
                 {
-                    if (pawn.jobs.curDriver.PlayerInterruptable)
-                    {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + (sickPawn != null ? sickPawn.Name.ToString() : sickPlatform.ToString()));
-                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, false);
-                    }
-                    else
-                    {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": cannot interrupt job (" + pawn.CurJobDef.defName + ")");
-                        return job;
-
-                    }
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": cannot interrupt job (" + pawn.CurJobDef.defName + ")");
+                    return job;
                 }
 
                 if (pawn.needs.food != null && pawn.needs.food.CurCategory >= HungerCategory.UrgentlyHungry && allowEating)
@@ -576,14 +568,6 @@ namespace TKS_PriorityTreatment
                             Job rescueJob = JobMaker.MakeJob(JobDefOf.Rescue, sickPawn, bed);
                             rescueJob.count = 1;
 
-                            pawn.Reserve(sickPawn, rescueJob);
-
-                            //bed might already be reserved by Pawn
-                            if (pawn.CanReserve(bed))
-                            {
-                                pawn.Reserve(bed, rescueJob);
-                            }
-
                             //add tend job to queue (this doesn't seem to work correctly)
                             //pawn.jobs.jobQueue.EnqueueFirst(gotoHealJob);
                             queuedJob = gotoHealJob;
@@ -591,8 +575,6 @@ namespace TKS_PriorityTreatment
                             return rescueJob;
                         }
                     }
-
-                    pawn.Reserve(sickPawn, gotoHealJob);
 
                     if (!sickPawn.InBed())
                     {
@@ -609,6 +591,21 @@ namespace TKS_PriorityTreatment
                 }
             }
             return null;
+        }
+
+        //try the job's own reservations before it is started, so a doctor is only pulled off what they are doing for a job that can begin
+        //the reservations are released again straight away - StartJob makes them for real
+        public static bool CanStartJob(Pawn pawn, Job job, string callingFunction)
+        {
+            bool canStart = job.TryMakePreToilReservations(pawn, false);
+            pawn.ClearReservationsForJob(job);
+
+            if (!canStart)
+            {
+                TKS_PriorityTreatment.DebugMessage(callingFunction + ": " + pawn.Name + " cannot reserve what " + job + " needs, leaving them on their current job");
+            }
+
+            return canStart;
         }
 
         //with manual priorities on, doctors must be set to 1; with them off the game reports every enabled work type as 3
@@ -737,7 +734,25 @@ namespace TKS_PriorityTreatment
             {
                 MapComponent_PriorityTreatment treatmentComponent = pawn.Map?.GetComponent<MapComponent_PriorityTreatment>();
                 treatmentComponent.tendablePawns.Remove(sickPawn);
-                __instance.StartJob(tendJob, JobCondition.InterruptOptional, null, false, false, null, null, false, false, null, false, true);
+
+                if (!TKS_PriorityTreatment.CanStartJob(pawn, tendJob, "TryFindAndStartJob"))
+                {
+                    return true;
+                }
+
+                __instance.StartJob(
+                    newJob: tendJob,
+                    lastJobEndCondition: JobCondition.InterruptForced,
+                    jobGiver: null,
+                    resumeCurJobAfterwards: false,
+                    cancelBusyStances: false,
+                    thinkTree: null,
+                    tag: null,
+                    fromQueue: false,
+                    canReturnCurJobToPool: false,
+                    keepCarryingThingOverride: null,
+                    continueSleeping: false,
+                    addToJobsThisTick: true);
                 if (queuedJob != null)
                 {
                     pawn.jobs.jobQueue.EnqueueFirst(queuedJob);
@@ -793,7 +808,25 @@ namespace TKS_PriorityTreatment
             {
                 MapComponent_PriorityTreatment treatmentComponent = __instance.Map?.GetComponent<MapComponent_PriorityTreatment>();
                 treatmentComponent.tendablePawns.Remove(sickPawn);
-                __instance.jobs.StartJob(tendJob, JobCondition.InterruptOptional, null, false, false, null, null, false, false, null, false, true);
+
+                if (!TKS_PriorityTreatment.CanStartJob(__instance, tendJob, "TickRare"))
+                {
+                    return true;
+                }
+
+                __instance.jobs.StartJob(
+                    newJob: tendJob,
+                    lastJobEndCondition: JobCondition.InterruptForced,
+                    jobGiver: null,
+                    resumeCurJobAfterwards: false,
+                    cancelBusyStances: false,
+                    thinkTree: null,
+                    tag: null,
+                    fromQueue: false,
+                    canReturnCurJobToPool: false,
+                    keepCarryingThingOverride: null,
+                    continueSleeping: false,
+                    addToJobsThisTick: true);
                 if (queuedJob != null)
                 {
                     __instance.jobs.jobQueue.EnqueueFirst(queuedJob);
