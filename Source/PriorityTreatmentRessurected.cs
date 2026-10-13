@@ -131,11 +131,15 @@ namespace TKS_PriorityTreatment
 
         public List<Pawn> tendablePawns;
 
+        //holding platforms whose entity needs tending (only filled when the tend entities setting is on)
+        public List<Thing> tendablePlatforms;
+
         private int ticks;
 
         public MapComponent_PriorityTreatment(Map map) : base(map)
         {
             this.tendablePawns = new List<Pawn>();
+            this.tendablePlatforms = new List<Thing>();
 
             this.ticks = 0;
         }
@@ -164,6 +168,7 @@ namespace TKS_PriorityTreatment
                 }
 
                 this.tendablePawns = SomeoneNeedsTreatment();
+                this.tendablePlatforms = EntitiesNeedTreatment();
 
                 this.ticks = 0;
             }
@@ -187,34 +192,9 @@ namespace TKS_PriorityTreatment
                     if (TKS_PriorityTreatment.HasTendableHediff(sickPawn) && (!sickPawn.InAggroMentalState))
                     {
                         bool includeSickness = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().includeSickness;
-                        bool shouldTendNow = false;
 
                         //check whether we should tend this now
-                        if (includeSickness)
-                        {
-                            shouldTendNow = HealthAIUtility.ShouldBeTendedNowByPlayer(sickPawn);
-                        }
-                        else
-                        {
-                            HediffSet pawnsHediffs = sickPawn.health.hediffSet;
-                            List<Hediff> pawnHediffs = pawnsHediffs.hediffs;
-
-                            //check if hediff is emergency
-                            foreach (Hediff hediff in pawnHediffs)
-                            {
-                                // TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: checking " + sickPawn.Name + "'s " + hediff.def.defName);
-                                if (hediff != null && hediff.TendableNow() && TKS_PriorityTreatment.emergencyHediffs.Contains(hediff.def.defName))
-                                {
-                                    //TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: " + hediff.def.defName + " is tendable now, checking pawn settings");
-                                    shouldTendNow = (sickPawn.playerSettings != null && HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(sickPawn));
-                                    if (shouldTendNow)
-                                    {
-                                        break;
-                                    }
-
-                                }
-                            }
-                        }
+                        bool shouldTendNow = TKS_PriorityTreatment.NeedsTreatmentNow(sickPawn, includeSickness);
                         if (shouldTendNow)
                         {
                             TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: " + sickPawn.Name + " needs treatment (include sickness: " + includeSickness.ToString() + ")");
@@ -246,6 +226,33 @@ namespace TKS_PriorityTreatment
             base.FinalizeInit();
 
             this.tendablePawns = SomeoneNeedsTreatment();
+            this.tendablePlatforms = EntitiesNeedTreatment();
+        }
+
+        private List<Thing> EntitiesNeedTreatment()
+        {
+            List<Thing> platforms = new List<Thing>();
+#if !v1_4
+            TKS_PriorityTreatmentSettings settings = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>();
+
+            if (!ModsConfig.AnomalyActive || !settings.tendEntities)
+            {
+                return platforms;
+            }
+
+            foreach (Thing platform in this.map.listerThings.ThingsInGroup(ThingRequestGroup.EntityHolder))
+            {
+                //same check the vanilla work giver uses (skips entities set to release or execute)
+                Pawn entity = WorkGiver_TendEntity.GetTendableEnityFromPotentialPlatform(platform);
+
+                if (entity != null && TKS_PriorityTreatment.NeedsTreatmentNow(entity, settings.includeSickness))
+                {
+                    TKS_PriorityTreatment.DebugMessage("EntitiesNeedTreatment: " + entity.LabelShort + " on " + platform + " needs treatment");
+                    platforms.Add(platform);
+                }
+            }
+#endif
+            return platforms;
         }
     }
 
@@ -256,6 +263,7 @@ namespace TKS_PriorityTreatment
         public bool allowEating = true;
         public bool debugPrint = false;
         public bool injuredSurgery = true;
+        public bool tendEntities = false;
 
         public override void ExposeData()
         {
@@ -265,6 +273,7 @@ namespace TKS_PriorityTreatment
             //Scribe_Values.Look(ref docPriority, "docPriority");
             Scribe_Values.Look(ref debugPrint, "debugPrint");
             Scribe_Values.Look(ref injuredSurgery, "injuredSurgery");
+            Scribe_Values.Look(ref tendEntities, "tendEntities");
 
             base.ExposeData();
         }
@@ -359,6 +368,30 @@ namespace TKS_PriorityTreatment
             return patient.GetPosture() > PawnPosture.Standing;
         }
 
+        public static bool NeedsTreatmentNow(Pawn sickPawn, bool includeSickness)
+        {
+            if (includeSickness)
+            {
+                return HealthAIUtility.ShouldBeTendedNowByPlayer(sickPawn);
+            }
+
+            if (sickPawn.playerSettings == null || !HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(sickPawn))
+            {
+                return false;
+            }
+
+            //check if any hediff is an emergency
+            foreach (Hediff hediff in sickPawn.health.hediffSet.hediffs)
+            {
+                if (hediff != null && hediff.TendableNow() && TKS_PriorityTreatment.emergencyHediffs.Contains(hediff.def.defName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static bool HasTendableHediff(Pawn pawn)
         {
             if (pawn.Dead == true) { return false; }
@@ -387,6 +420,34 @@ namespace TKS_PriorityTreatment
             return tendWorkGiver.JobOnThing(doctor, patient, false);
         }
 
+#if !v1_4
+        private static readonly WorkGiver_TendEntity tendEntityWorkGiver = new WorkGiver_TendEntity();
+#endif
+
+        //find a holding platform this doctor can tend right now, using the vanilla work giver's own checks
+        public static Thing FindTendablePlatform(Pawn doctor, MapComponent_PriorityTreatment treatmentComponent)
+        {
+#if !v1_4
+            foreach (Thing platform in treatmentComponent.tendablePlatforms)
+            {
+                if (!platform.IsForbidden(doctor) && tendEntityWorkGiver.HasJobOnThing(doctor, platform) && doctor.CanReach(platform, PathEndMode.ClosestTouch, Danger.Some))
+                {
+                    return platform;
+                }
+            }
+#endif
+            return null;
+        }
+
+        public static Job MakeTendEntityJob(Pawn doctor, Thing platform)
+        {
+#if v1_4
+            return null;
+#else
+            return tendEntityWorkGiver.JobOnThing(doctor, platform, false);
+#endif
+        }
+
         public static Job MakePriorityTreatmentJob(Pawn pawn, out Pawn sickPawn, out Job queuedJob, string callingFunction = "TryFindAndStartJob")
         {
             //primary function, return a job for the doctor to do (tend, resuce, or eat) or return null if none
@@ -398,7 +459,7 @@ namespace TKS_PriorityTreatment
 
             MapComponent_PriorityTreatment treatmentComponent = pawn.Map?.GetComponent<MapComponent_PriorityTreatment>();
 
-            if (treatmentComponent == null || treatmentComponent.tendablePawns.Count == 0)
+            if (treatmentComponent == null || (treatmentComponent.tendablePawns.Count == 0 && treatmentComponent.tendablePlatforms.Count == 0))
             {
                 //TKS_PriorityTreatment.DebugMessage("TryFindAndStartJob: pawn "+pawn.Name+" map or component is null, cannot prioritize treatment");
                 //Log.WarningOnce("PriorityTreatment: map component for this map (or the map itself) is null, no priority treatment will occur", 1);
@@ -460,13 +521,20 @@ namespace TKS_PriorityTreatment
             //only go if there are patients
             sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
 
-            if (sickPawn != null)
+            //entities come last, only when no pawn needs this doctor
+            Thing sickPlatform = null;
+            if (sickPawn == null)
+            {
+                sickPlatform = TKS_PriorityTreatment.FindTendablePlatform(pawn, treatmentComponent);
+            }
+
+            if (sickPawn != null || sickPlatform != null)
             {
                 if (pawn.CurJob != null)
                 {
                     if (pawn.jobs.curDriver.PlayerInterruptable)
                     {
-                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + sickPawn.Name);
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": interrupting current job (" + pawn.CurJobDef.defName + ") and attempting to provide treatment for " + (sickPawn != null ? sickPawn.Name.ToString() : sickPlatform.ToString()));
                         pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, false);
                     }
                     else
@@ -495,6 +563,14 @@ namespace TKS_PriorityTreatment
 
                         return eatJob;
                     }
+                }
+
+                if (sickPlatform != null)
+                {
+                    TKS_PriorityTreatment.DebugMessage(callingFunction + ": entity on " + sickPlatform + " needs treatment, attempting to treat with " + pawn.Name);
+
+                    treatmentComponent.tendablePlatforms.Remove(sickPlatform);
+                    return TKS_PriorityTreatment.MakeTendEntityJob(pawn, sickPlatform);
                 }
 
                 if (pawn.CanReserveAndReach(sickPawn, PathEndMode.OnCell, Danger.Some))
@@ -619,6 +695,12 @@ namespace TKS_PriorityTreatment
             listingStandard.CheckboxLabeled("TKSWakeUpToTend".Translate(), ref settings.wakeUpToTend, "TKSWakeUpToTendToolTip".Translate());
             listingStandard.CheckboxLabeled("TKSAllowEating".Translate(), ref settings.allowEating, "TKSAllowEatingToolTip".Translate());
             listingStandard.CheckboxLabeled("TKSAllowInjuredSurgery".Translate(), ref settings.injuredSurgery, "TKSAllowInjuredSurgeryTooltip".Translate());
+#if !v1_4
+            if (ModsConfig.AnomalyActive)
+            {
+                listingStandard.CheckboxLabeled("TKSTendEntities".Translate(), ref settings.tendEntities, "TKSTendEntitiesToolTip".Translate());
+            }
+#endif
 
             //listingStandard.Label("TKSDocPriorityToolTip".Translate(), -1, "TKSDocPriorityToolTip".Translate());
             //listingStandard.TextFieldNumeric<int>(ref settings.docPriority, ref editBufferFloat, 1, 4);

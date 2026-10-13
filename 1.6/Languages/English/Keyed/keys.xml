@@ -13,4 +13,6 @@
 	<NotOperatingWithInjuries>{0} will not perform surgery while injured (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
 	<TKSAllowInjuredSurgery>Allow injured pawns to perform surgery.</TKSAllowInjuredSurgery>
 	<TKSAllowInjuredSurgeryTooltip>Toggle to block injured pawns from performing surgery, will wait until they are healthy again.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Tend entities as emergencies</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Check this for your doctors to also drop what they are doing to tend entities held on holding platforms. Entities are only tended when no colonist, prisoner or animal needs the doctor. Requires Anomaly.</TKSTendEntitiesToolTip>
 </LanguageData>
