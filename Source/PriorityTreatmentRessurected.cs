@@ -355,14 +355,18 @@ namespace TKS_PriorityTreatment
 
         public static bool NeedsTreatmentNow(Pawn sickPawn, bool includeSickness)
         {
-            if (includeSickness)
-            {
-                return HealthAIUtility.ShouldBeTendedNowByPlayer(sickPawn);
-            }
-
-            if (sickPawn.playerSettings == null || !HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(sickPawn))
+            //vanilla's own rule for who the colony tends: respects medical care settings, and only covers the player's pawns and animals,
+            //guests and prisoners, and anything on a holding platform (so not an escaped entity or a downed enemy)
+            //note: before this check the emergency-only mode just needed the pawn to have player medical settings, so it is possible some
+            //edge case pawn that used to be priority tended is now dropped from the tend list here (ie modded pawn types vanilla doesn't count as the colony's)
+            if (!HealthAIUtility.ShouldBeTendedNowByPlayer(sickPawn))
             {
                 return false;
+            }
+
+            if (includeSickness)
+            {
+                return true;
             }
 
             //check if any hediff is an emergency
@@ -380,6 +384,14 @@ namespace TKS_PriorityTreatment
         public static bool HasTendableHediff(Pawn pawn)
         {
             if (pawn.Dead == true) { return false; }
+
+            //only the kinds of pawn vanilla's doctors tend - humanlikes and animals, not loose entities or mechs
+            if (!pawn.RaceProps.Humanlike && !pawn.RaceProps.Animal) { return false; }
+
+#if !v1_4
+            //same exclusion as the vanilla tend work giver (ie shamblers)
+            if (pawn.IsMutant && !pawn.mutant.Def.entitledToMedicalCare) { return false; }
+#endif
 
             //do extra mod-based checks
             if (!Utils.ExtraPawnChecks(pawn)) { return false; }
