@@ -53,9 +53,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="1.5\Languages\English\Keyed\keys.xml" />
-    <Content Include="1.4\Languages\English\Keyed\keys.xml" />
-    <Content Include="1.6\Languages\English\Keyed\keys.xml" />
+    <Content Include="Languages\English\Keyed\keys.xml" />
     <Content Include="About\About.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -67,7 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\workshop\content\294100\2009463077\Current\Assemblies\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\workshop\content\294100\2009463077\$(Configuration)\Assemblies\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">

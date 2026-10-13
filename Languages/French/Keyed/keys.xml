@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Soigner les maladies de longue durée</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>Par défaut, vos médecins ne traitent que les blessures comme des urgences absolues. Cochez cette case pour inclure tous les soins (y compris ceux des maladies de longue durée).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Se réveiller pour soigner</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Cochez pour que vos médecins se réveillent et soignent même s'ils dorment. Si vous utilisez un autre mod qui le fait déjà (par ex. Wake Up), vous pouvez laisser décoché.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>Autoriser les médecins à manger</TKSAllowEating>
+	<TKSAllowEatingToolTip>Si cette case est décochée, les médecins continuent les soins d'urgence au lieu de se nourrir (prenez soin de vos médecins !)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Afficher des informations de débogage supplémentaires dans le journal.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0} n'opère pas en étant blessé (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Autoriser les pions blessés à pratiquer des opérations.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Désactivez pour empêcher les pions blessés d'opérer ; ils attendront d'être rétablis.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Soigner les entités comme des urgences</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Cochez pour que vos médecins lâchent aussi ce qu'ils font pour soigner les entités sur les plateformes de détention. Les entités ne sont soignées que si aucun colon, prisonnier ou animal n'a besoin du médecin. Nécessite Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Porter les animaux à terre jusqu'à un lit situé à {0} cases maximum</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>Un animal à terre est porté jusqu'à un lit avant d'être soigné, sauf si le lit libre le plus proche est plus loin que cette distance. Dans ce cas, le médecin le soigne sur place pour qu'il ne se vide pas de son sang en chemin. À 0, les animaux à terre sont toujours soignés sur place. Ne concerne pas les humains, qui sont toujours portés jusqu'à un lit.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>Mode recherche de chemin : mesurer le trajet à pied jusqu'au lit</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>Désactivé : distance en ligne droite jusqu'au lit. Rapide, mais ignore les murs et les montagnes. Activé : longueur du trajet que le médecin parcourrait réellement. Plus précis, mais lance une recherche de chemin à chaque envoi d'un médecin vers un animal à terre.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

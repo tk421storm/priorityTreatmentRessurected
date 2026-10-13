@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Langzeiterkrankungen behandeln</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>Standardmäßig behandeln deine Ärzte nur Verletzungen als absolute Notfälle. Aktiviere dies, um alle Behandlungen einzuschließen (auch die von Langzeiterkrankungen).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Zum Behandeln aufwachen</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Aktiviere dies, damit deine Ärzte aufwachen und behandeln, auch wenn sie schlafen. Wenn du eine andere Mod nutzt, die das übernimmt (z. B. Wake Up), kannst du dies deaktiviert lassen.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>Ärzten das Essen erlauben</TKSAllowEating>
+	<TKSAllowEatingToolTip>Ist dies deaktiviert, setzen Ärzte die Notfallbehandlung fort, statt selbst zu essen (kümmere dich um deine Ärzte!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Zusätzliche Debug-Informationen im Log anzeigen.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0} führt verletzt keine Operationen durch (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Verletzten Pawns erlauben, Operationen durchzuführen.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Deaktivieren, damit verletzte Pawns keine Operationen durchführen und warten, bis sie wieder gesund sind.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Entitäten als Notfälle behandeln</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Aktiviere dies, damit deine Ärzte auch alles stehen und liegen lassen, um Entitäten auf Halteplattformen zu behandeln. Entitäten werden nur behandelt, wenn kein Kolonist, Gefangener oder Tier den Arzt braucht. Benötigt Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Am Boden liegende Tiere bis zu {0} Felder weit zu einem Bett tragen</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>Ein am Boden liegendes Tier wird vor der Behandlung zu einem Bett getragen, es sei denn, das nächste freie Bett ist weiter entfernt als dieser Wert. Dann behandelt der Arzt es an Ort und Stelle, damit es unterwegs nicht verblutet. Bei 0 werden am Boden liegende Tiere immer an Ort und Stelle behandelt. Gilt nicht für Menschen, sie werden immer zu einem Bett getragen.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>Wegfindungsmodus: den Laufweg zum Bett messen</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>Aus: Luftlinie zum Bett. Schnell, ignoriert aber Wände und Berge im Weg. An: Länge des Weges, den der Arzt tatsächlich gehen würde. Genauer, startet aber bei jedem Einsatz zu einem am Boden liegenden Tier die Wegfindung.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

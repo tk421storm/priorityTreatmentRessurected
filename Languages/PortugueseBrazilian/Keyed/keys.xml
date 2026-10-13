@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Tratar doenças de longa duração</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>Por padrão, seus médicos só tratam ferimentos como emergências absolutas. Marque esta opção para incluir todos os tipos de tratamento (inclusive de doenças de longa duração).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Acordar para tratar</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Marque para que seus médicos acordem e tratem mesmo se estiverem dormindo. Se você usa outro mod que já faz isso (ex.: Wake Up), pode deixar desmarcado.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>Permitir que os médicos comam</TKSAllowEating>
+	<TKSAllowEatingToolTip>Se desmarcado, os médicos continuarão o tratamento de emergência em vez de se alimentar (cuide dos seus médicos!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Mostrar informações extras de depuração nos registros.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0} não fará cirurgias enquanto estiver com ferimentos (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Permitir que peões feridos façam cirurgias.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Desative para impedir que peões feridos façam cirurgias; eles esperarão até estarem saudáveis de novo.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Tratar entidades como emergências</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Marque para que seus médicos também larguem o que estão fazendo para tratar entidades em plataformas de contenção. As entidades só são tratadas quando nenhum colono, prisioneiro ou animal precisa do médico. Requer Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Carregar animais abatidos até uma cama a no máximo {0} células</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>Um animal abatido é carregado até uma cama antes de ser tratado, a menos que a cama livre mais próxima esteja mais longe que esta distância. Nesse caso o médico o trata onde ele está, para que não sangre até a morte no caminho. Com 0, animais abatidos são sempre tratados onde estão. Não afeta pessoas, que sempre são carregadas até uma cama.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>Modo de busca de caminho: medir o trajeto a pé até a cama</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>Desligado: distância em linha reta até a cama. Rápido, mas ignora paredes e montanhas no caminho. Ligado: comprimento do trajeto que o médico realmente percorreria. Mais preciso, mas executa a busca de caminho toda vez que um médico é enviado a um animal abatido.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

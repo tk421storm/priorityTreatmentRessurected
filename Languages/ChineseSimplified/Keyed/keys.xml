@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>治疗长期疾病</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>默认情况下，医生只会把伤口当作紧急情况处理。勾选此项后，所有治疗（包括长期疾病的治疗）都会被优先处理。</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>醒来进行治疗</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>勾选后，医生即使在睡觉也会醒来进行治疗。如果你使用了其他实现此功能的模组（例如 Wake Up），可以不勾选。</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>允许医生进食</TKSAllowEating>
+	<TKSAllowEatingToolTip>取消勾选后，医生会继续进行紧急治疗而不去吃饭（请照顾好你的医生！）</TKSAllowEatingToolTip>
+	<TKSDebugPrint>在日志中显示额外的调试信息。</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0}受伤时不会进行手术（PriorityTreatmentRessurected）</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>允许受伤的小人进行手术。</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>关闭后，受伤的小人不会进行手术，会等到恢复健康后再进行。</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>将实体视为紧急情况进行治疗</TKSTendEntities>
+	<TKSTendEntitiesToolTip>勾选后，医生也会放下手头的工作去治疗收容平台上的实体。只有在没有殖民者、囚犯或动物需要医生时才会治疗实体。需要 Anomaly DLC。</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>将倒地的动物搬到 {0} 格以内的床上</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>倒地的动物会先被搬到床上再接受治疗，除非最近的空床比这个距离更远。超过该距离时，医生会就地治疗，以免动物在途中失血而死。设为 0 则始终就地治疗倒地的动物。不影响人类，人类始终会被搬到床上。</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>寻路模式：按实际行走路线计算到床的距离</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>关闭：按到床的直线距离计算。速度快，但会忽略途中的墙壁和山体。开启：按医生实际行走路线的长度计算。更准确，但每次派医生去治疗倒地的动物时都要运行一次寻路。</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

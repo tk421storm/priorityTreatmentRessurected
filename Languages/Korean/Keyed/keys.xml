@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>장기 질병 치료</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>기본적으로 의사는 부상만 긴급 상황으로 취급합니다. 이 항목을 선택하면 모든 치료(장기 질병 치료 포함)가 우선 처리됩니다.</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>일어나서 치료하기</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>선택하면 의사가 자고 있더라도 일어나서 치료합니다. 같은 기능의 다른 모드(예: Wake Up)를 사용 중이라면 선택하지 않아도 됩니다.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>의사의 식사 허용</TKSAllowEating>
+	<TKSAllowEatingToolTip>선택을 해제하면 의사가 식사를 하지 않고 긴급 치료를 계속합니다 (의사를 잘 돌봐 주세요!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>로그에 추가 디버그 정보를 표시합니다.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0}: 부상 중에는 수술을 하지 않습니다 (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>부상당한 폰의 수술 허용</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>해제하면 부상당한 폰은 수술을 하지 않고 회복될 때까지 기다립니다.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>실체를 긴급 상황으로 치료</TKSTendEntities>
+	<TKSTendEntitiesToolTip>선택하면 의사가 하던 일을 멈추고 구속대에 있는 실체도 치료합니다. 실체는 정착민, 수감자, 동물 중 의사가 필요한 대상이 없을 때만 치료합니다. Anomaly DLC가 필요합니다.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>쓰러진 동물을 {0}칸 이내의 침대로 옮기기</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>쓰러진 동물은 침대로 옮긴 뒤 치료합니다. 단, 가장 가까운 빈 침대가 이 거리보다 멀면 이동 중에 과다출혈로 죽지 않도록 그 자리에서 치료합니다. 0으로 설정하면 쓰러진 동물을 항상 그 자리에서 치료합니다. 사람에게는 적용되지 않으며, 사람은 항상 침대로 옮깁니다.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>경로 탐색 모드: 침대까지 실제 이동 경로로 측정</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>끔: 침대까지의 직선 거리로 계산합니다. 빠르지만 중간의 벽이나 산을 무시합니다. 켬: 의사가 실제로 걸어갈 경로의 길이로 계산합니다. 더 정확하지만 쓰러진 동물에게 의사를 보낼 때마다 경로 탐색을 실행합니다.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

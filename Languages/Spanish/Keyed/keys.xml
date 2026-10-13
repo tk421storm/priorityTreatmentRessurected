@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Tratar enfermedades de larga duración</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>Por defecto, tus médicos solo tratan las heridas como emergencias absolutas. Marca esta casilla para incluir todo tipo de tratamiento (también el de enfermedades de larga duración).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Despertarse para atender</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Marca esto para que tus médicos se despierten y atiendan aunque estén dormidos. Si usas otro mod que ya lo hace (p. ej. Wake Up), puedes dejarlo sin marcar.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>Permitir que los médicos coman</TKSAllowEating>
+	<TKSAllowEatingToolTip>Si se desmarca, los médicos seguirán con el tratamiento de emergencia en lugar de alimentarse (¡cuida de tus médicos!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Mostrar información de depuración adicional en el registro.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0} no operará mientras tenga heridas (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Permitir que los peones heridos realicen operaciones.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Desactívalo para impedir que los peones heridos realicen operaciones; esperarán hasta estar sanos de nuevo.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Atender entidades como emergencias</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Marca esto para que tus médicos también dejen lo que estén haciendo para atender a las entidades en plataformas de contención. Las entidades solo se atienden cuando ningún colono, prisionero o animal necesita al médico. Requiere Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Llevar animales inconscientes a una cama a un máximo de {0} casillas</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>Un animal inconsciente se lleva a una cama antes de atenderlo, salvo que la cama libre más cercana esté más lejos que esta distancia. En ese caso el médico lo atiende donde está, para que no se desangre por el camino. Con 0, los animales inconscientes siempre se atienden donde están. No afecta a las personas, que siempre se llevan a una cama.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>Modo de búsqueda de rutas: medir el recorrido a pie hasta la cama</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>Desactivado: distancia en línea recta hasta la cama. Rápido, pero ignora muros y montañas en el camino. Activado: longitud de la ruta que el médico recorrería realmente. Más preciso, pero calcula la ruta cada vez que se envía a un médico a un animal inconsciente.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Lecz choroby przewlekłe</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>Domyślnie lekarze traktują jako nagłe przypadki tylko obrażenia. Zaznacz, aby objąć wszystkie rodzaje leczenia (także chorób przewlekłych).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Budź się, aby leczyć</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Zaznacz, aby lekarze budzili się i leczyli, nawet gdy śpią. Jeśli używasz innego moda, który to robi (np. Wake Up), możesz zostawić to pole odznaczone.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>Pozwól lekarzom jeść</TKSAllowEating>
+	<TKSAllowEatingToolTip>Jeśli to pole jest odznaczone, lekarze będą kontynuować leczenie w nagłych przypadkach zamiast jeść (dbaj o swoich lekarzy!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Pokazuj dodatkowe informacje debugowania w logach.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0} nie przeprowadzi operacji, dopóki ma obrażenia (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Pozwól rannym pionkom przeprowadzać operacje.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Wyłącz, aby ranne pionki nie przeprowadzały operacji i czekały, aż wyzdrowieją.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Lecz istoty jako nagłe przypadki</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Zaznacz, aby lekarze przerywali swoje zajęcia także po to, by leczyć istoty na platformach do przetrzymywania. Istoty są leczone tylko wtedy, gdy żaden kolonista, więzień ani zwierzę nie potrzebuje lekarza. Wymaga Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Przenoś znokautowane zwierzęta do łóżka oddalonego najwyżej o {0} pól</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>Znokautowane zwierzę jest przenoszone do łóżka przed leczeniem, chyba że najbliższe wolne łóżko jest dalej niż ta odległość. Wtedy lekarz leczy je na miejscu, aby nie wykrwawiło się po drodze. Ustaw 0, aby zawsze leczyć znokautowane zwierzęta na miejscu. Nie dotyczy ludzi, którzy zawsze są przenoszeni do łóżka.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>Tryb wyszukiwania ścieżki: mierz trasę pieszą do łóżka</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>Wyłączony: odległość do łóżka w linii prostej. Szybki, ale pomija ściany i góry po drodze. Włączony: długość trasy, którą lekarz faktycznie by przeszedł. Dokładniejszy, ale uruchamia wyszukiwanie ścieżki za każdym razem, gdy lekarz jest wysyłany do znokautowanego zwierzęcia.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>

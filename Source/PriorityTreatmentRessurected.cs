@@ -237,7 +237,6 @@ namespace TKS_PriorityTreatment
             Scribe_Values.Look(ref includeSickness, "includeSickness");
             Scribe_Values.Look(ref wakeUpToTend, "wakeUpToTend", true);
             Scribe_Values.Look(ref allowEating, "allowEating");
-            //Scribe_Values.Look(ref docPriority, "docPriority");
             Scribe_Values.Look(ref debugPrint, "debugPrint");
             Scribe_Values.Look(ref injuredSurgery, "injuredSurgery");
             Scribe_Values.Look(ref tendEntities, "tendEntities");
@@ -678,7 +677,7 @@ namespace TKS_PriorityTreatment
                         //a downed humanlike is always carried to the bed. a downed animal is too, unless the bed is far enough away that it is better tended where it lies
                         if (bed != null && !TKS_PriorityTreatment.TooFarToCarry(pawn, sickPawn, bed))
                         {
-                            TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " taking to bed" + pawn.Name);
+                            TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " is being taken to bed by " + pawn.Name);
 
                             Job rescueJob = JobMaker.MakeJob(JobDefOf.Rescue, sickPawn, bed);
                             rescueJob.count = 1;
@@ -842,8 +841,6 @@ namespace TKS_PriorityTreatment
             this.settings = GetSettings<TKS_PriorityTreatmentSettings>();
         }
 
-        private string editBufferFloat;
-
         public override void DoSettingsWindowContents(Rect inRect)
         {
             Listing_Standard listingStandard = new Listing_Standard();
@@ -864,9 +861,6 @@ namespace TKS_PriorityTreatment
 #if !(v1_4 || v1_5)
             listingStandard.CheckboxLabeled("TKSAnimalRescuePathfinding".Translate(), ref settings.animalRescuePathfinding, "TKSAnimalRescuePathfindingToolTip".Translate());
 #endif
-
-            //listingStandard.Label("TKSDocPriorityToolTip".Translate(), -1, "TKSDocPriorityToolTip".Translate());
-            //listingStandard.TextFieldNumeric<int>(ref settings.docPriority, ref editBufferFloat, 1, 4);
 
             listingStandard.CheckboxLabeled("TKSDebugPrint".Translate(), ref settings.debugPrint);
             listingStandard.End();
@@ -1091,7 +1085,7 @@ namespace TKS_PriorityTreatment
 
             if (pawn.health.hediffSet.GetNaturallyHealingInjuredParts().Count != 0)
             {
-                JobFailReason.Is("NotOperatingWithInjuries".Translate(pawn.Name), __instance.Label);
+                JobFailReason.Is("NotOperatingWithInjuries".Translate(pawn.LabelShort), __instance.Label);
                 __result = false;
             }
         }

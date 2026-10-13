@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Machine-drafted translation, aligned with the official RimWorld wording for key terms but not reviewed by a native speaker.
+     Corrections are welcome: https://github.com/tk421storm/priorityTreatmentRessurected -->
+<LanguageData>
+	<TKSPriortyTreatmentName>Priority Treatment Ressurected</TKSPriortyTreatmentName>
+	<TKSIncludeSickness>Лечить хронические болезни</TKSIncludeSickness>
+	<TKSIncludeSicknessToolTip>По умолчанию врачи считают неотложными только ранения. Отметьте, чтобы включить любое лечение (в том числе хронических болезней).</TKSIncludeSicknessToolTip>
+	<TKSWakeUpToTend>Просыпаться для лечения</TKSWakeUpToTend>
+	<TKSWakeUpToTendToolTip>Отметьте, чтобы врачи просыпались и лечили, даже если спят. Если вы используете другой мод с такой функцией (например, Wake Up), можно не отмечать.</TKSWakeUpToTendToolTip>
+	<TKSAllowEating>Разрешить врачам есть</TKSAllowEating>
+	<TKSAllowEatingToolTip>Если не отмечено, врачи будут продолжать неотложное лечение вместо того, чтобы поесть (берегите своих врачей!)</TKSAllowEatingToolTip>
+	<TKSDebugPrint>Показывать дополнительную отладочную информацию в журнале.</TKSDebugPrint>
+	<NotOperatingWithInjuries>{0}: не оперирует, пока есть ранения (PriorityTreatmentRessurected)</NotOperatingWithInjuries>
+	<TKSAllowInjuredSurgery>Разрешить раненым пешкам проводить операции.</TKSAllowInjuredSurgery>
+	<TKSAllowInjuredSurgeryTooltip>Отключите, чтобы раненые пешки не проводили операции и ждали, пока не выздоровеют.</TKSAllowInjuredSurgeryTooltip>
+	<TKSTendEntities>Лечить тварей как неотложные случаи</TKSTendEntities>
+	<TKSTendEntitiesToolTip>Отметьте, чтобы врачи также бросали свои дела ради лечения тварей на фиксирующих платформах. Тварей лечат, только когда врач не нужен ни поселенцу, ни пленнику, ни животному. Требуется Anomaly.</TKSTendEntitiesToolTip>
+	<TKSAnimalRescueMaxDistance>Нести обездвиженных животных к кровати на расстояние до {0} клеток</TKSAnimalRescueMaxDistance>
+	<TKSAnimalRescueMaxDistanceToolTip>Обездвиженное животное сначала относят на кровать, а потом лечат, если только ближайшая свободная кровать не дальше этого расстояния. Если дальше, врач лечит животное на месте, чтобы оно не истекло кровью по дороге. Значение 0 — всегда лечить обездвиженных животных на месте. Не касается людей: их всегда относят на кровать.</TKSAnimalRescueMaxDistanceToolTip>
+	<TKSAnimalRescuePathfinding>Режим поиска пути: измерять маршрут до кровати</TKSAnimalRescuePathfinding>
+	<TKSAnimalRescuePathfindingToolTip>Выкл.: расстояние до кровати по прямой. Быстро, но не учитывает стены и горы на пути. Вкл.: длина маршрута, которым врач действительно пойдёт. Точнее, но поиск пути запускается каждый раз, когда врача отправляют к обездвиженному животному.</TKSAnimalRescuePathfindingToolTip>
+</LanguageData>
