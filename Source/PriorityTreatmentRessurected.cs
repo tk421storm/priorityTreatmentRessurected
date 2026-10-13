@@ -379,6 +379,14 @@ namespace TKS_PriorityTreatment
             return false;
         }
 
+        private static readonly WorkGiver_Tend tendWorkGiver = new WorkGiver_TendOther();
+
+        //build the tend job through the vanilla work giver, so mods that patch it (smart medicine sets the medicine count there) still apply
+        public static Job MakeTendJob(Pawn doctor, Pawn patient)
+        {
+            return tendWorkGiver.JobOnThing(doctor, patient, false);
+        }
+
         public static Job MakePriorityTreatmentJob(Pawn pawn, out Pawn sickPawn, out Job queuedJob, string callingFunction = "TryFindAndStartJob")
         {
             //primary function, return a job for the doctor to do (tend, resuce, or eat) or return null if none
@@ -493,23 +501,7 @@ namespace TKS_PriorityTreatment
                 {
                     TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " needs treatment, attempting to treat with " + pawn.Name);
 
-                    Thing medicine = HealthAIUtility.FindBestMedicine(pawn, sickPawn, false);
-
-                    Job gotoHealJob = null;
-                    if (medicine != null && medicine.SpawnedParentOrMe != medicine)
-                    {
-                        gotoHealJob = JobMaker.MakeJob(JobDefOf.TendPatient, sickPawn, medicine, medicine.SpawnedParentOrMe);
-                    }
-                    else if (medicine != null)
-                    {
-                        gotoHealJob = JobMaker.MakeJob(JobDefOf.TendPatient, sickPawn, medicine);
-                    }
-                    else
-                    {
-                        gotoHealJob = JobMaker.MakeJob(JobDefOf.TendPatient, sickPawn);
-                    };
-
-                    //gotoHealJob.count = Medicine.GetMedicineCountToFullyHeal(sickPawn);
+                    Job gotoHealJob = TKS_PriorityTreatment.MakeTendJob(pawn, sickPawn);
                     gotoHealJob.draftedTend = false;
 
                     if (!sickPawn.InBed())
