@@ -244,7 +244,7 @@ namespace TKS_PriorityTreatment
     public class TKS_PriorityTreatmentSettings : ModSettings
     {
         public bool includeSickness = false;
-        public bool wakeUpToTend = false;
+        public bool wakeUpToTend = true;
         public bool allowEating = true;
         public bool debugPrint = false;
         public bool injuredSurgery = true;
@@ -253,7 +253,7 @@ namespace TKS_PriorityTreatment
         public override void ExposeData()
         {
             Scribe_Values.Look(ref includeSickness, "includeSickness");
-            Scribe_Values.Look(ref wakeUpToTend, "wakeUpToTend");
+            Scribe_Values.Look(ref wakeUpToTend, "wakeUpToTend", true);
             Scribe_Values.Look(ref allowEating, "allowEating");
             //Scribe_Values.Look(ref docPriority, "docPriority");
             Scribe_Values.Look(ref debugPrint, "debugPrint");
@@ -772,8 +772,8 @@ namespace TKS_PriorityTreatment
                 return true;
             }
 
-            //do sleep wakeup first
-            if (__instance.CurJobDef == null && (__instance.CurJobDef == JobDefOf.Wait_WithSleeping || __instance.CurJobDef == JobDefOf.Wait_Asleep || __instance.CurJobDef == JobDefOf.LayDownResting || __instance.CurJobDef == JobDefOf.LayDown))
+            //do sleep wakeup first - a sleeping doctor is left alone unless the player has asked for them to be woken
+            if (!__instance.Awake())
             {
                 bool wakeUpToTend = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().wakeUpToTend;
                 //only use this method if player settings include wake up to tend
