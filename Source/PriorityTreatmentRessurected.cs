@@ -524,7 +524,8 @@ namespace TKS_PriorityTreatment
             }
             else
             {
-                sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => x != pawn && pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
+                //IsForbidden is what keeps the doctor inside their allowed area - CanReserveAndReach only checks pathing and reservations
+                sickPawn = treatmentComponent.tendablePawns.FirstOrDefault<Pawn>(x => x != pawn && !x.IsForbidden(pawn) && pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some));
             }
 
             //entities come last, only when no pawn needs this doctor
