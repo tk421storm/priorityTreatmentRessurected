@@ -254,7 +254,6 @@ namespace TKS_PriorityTreatment
         public bool includeSickness = false;
         public bool wakeUpToTend = false;
         public bool allowEating = true;
-        public int docPriority = 1;
         public bool debugPrint = false;
         public bool injuredSurgery = true;
 
@@ -559,6 +558,15 @@ namespace TKS_PriorityTreatment
             return null;
         }
 
+        //with manual priorities on, doctors must be set to 1; with them off the game reports every enabled work type as 3
+        public static int RequiredDocPriority
+        {
+            get
+            {
+                return Find.PlaySettings.useWorkPriorities ? 1 : 3;
+            }
+        }
+
         public static bool PawnIsDoctor(Pawn pawn, string callingFunction = "PawnIsDoctor")
         {
             try
@@ -581,7 +589,7 @@ namespace TKS_PriorityTreatment
 
                 //check is assigned to doctoring
                 int medPriority = pawn.workSettings.GetPriority(WorkTypeDefOf.Doctor);
-                int reqDocPriority = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().docPriority;
+                int reqDocPriority = TKS_PriorityTreatment.RequiredDocPriority;
 
                 if (medPriority != 0 && medPriority <= reqDocPriority)
                 {
