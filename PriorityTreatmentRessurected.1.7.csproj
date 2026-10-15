@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- RimWorld 1.7 onwards: the game runs on .NET 10, so this project replaces PriorityTreatmentRessurected.csproj
+       (.NET Framework 4.8, 1.4-1.6). Add a configuration per new game version below. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Configurations>1.7</Configurations>
+    <Platforms>AnyCPU</Platforms>
+    <AssemblyName>PriorityTreatmentRessurected</AssemblyName>
+    <RootNamespace>PriorityTreatmentRessurected</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <!-- Source files are listed explicitly and AssemblyInfo.cs is shared with the old project -->
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Keep the output to just the mod DLL and its pdb -->
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(Configuration)\Assemblies\</OutputPath>
+    <!-- Stop the SDK adding "1_7" as a define from the configuration name; v1_7 is set below -->
+    <DisableImplicitConfigurationDefines>true</DisableImplicitConfigurationDefines>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <RimWorldDir>..\..\</RimWorldDir>
+    <HarmonyDir>..\..\..\..\workshop\content\294100\2009463077\$(Configuration)\Assemblies\</HarmonyDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == '1.7'">
+    <DefineConstants>v1_7</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Source\PriorityTreatmentRessurected.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="About\About.xml" />
+    <None Include="Languages\**\*.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(HarmonyDir)0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(RimWorldDir)Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityStubs">
+      <HintPath>$(RimWorldDir)UnityStubs.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Waylith">
+      <HintPath>$(RimWorldDir)Waylith.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
