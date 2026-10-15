@@ -1,6 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
   <!-- RimWorld 1.7 onwards: the game runs on .NET 10, so this project replaces PriorityTreatmentRessurected.csproj
        (.NET Framework 4.8, 1.4-1.6). Add a configuration per new game version below. -->
+  <!-- The SDK is imported explicitly so the intermediate folder can be set first: the old project
+       shares this folder, and would pick up a project.assets.json written to obj\ -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>obj\net10\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Configurations>1.7</Configurations>
@@ -54,4 +60,5 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 </Project>
