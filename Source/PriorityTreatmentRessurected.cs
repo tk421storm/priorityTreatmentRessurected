@@ -134,6 +134,9 @@ namespace TKS_PriorityTreatment
         {
             List<Pawn> tendablePawns = new List<Pawn>();
 
+            //downed pawns with nothing to tend (ie blacked out drunk) - listed after everyone who needs tending
+            List<Pawn> rescueOnlyPawns = new List<Pawn>();
+
             if (TKS_PriorityTreatment.MapHasPatients(this.map))
             {
 
@@ -143,7 +146,16 @@ namespace TKS_PriorityTreatment
 
                     //TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: checking " + sickPawn.Name);
 
-                    if (TKS_PriorityTreatment.HasTendableHediff(sickPawn) && (!sickPawn.InAggroMentalState))
+                    bool hasTendableHediff = TKS_PriorityTreatment.HasTendableHediff(sickPawn);
+
+                    if (!hasTendableHediff && TKS_PriorityTreatment.NeedsRescueOnly(sickPawn))
+                    {
+                        TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: " + sickPawn.Name + " is downed with nothing to tend, needs rescue");
+                        rescueOnlyPawns.Add(sickPawn);
+                        continue;
+                    }
+
+                    if (hasTendableHediff && (!sickPawn.InAggroMentalState))
                     {
                         bool includeSickness = LoadedModManager.GetMod<TKS_PriorityTreatment>().GetSettings<TKS_PriorityTreatmentSettings>().includeSickness;
 
@@ -169,6 +181,9 @@ namespace TKS_PriorityTreatment
                     }
                 }
             }
+
+            tendablePawns.AddRange(rescueOnlyPawns);
+
             if (TKS_PriorityTreatment.DebugOn)
             {
                 TKS_PriorityTreatment.DebugMessage("MapComponent: found " + tendablePawns.Count + " pawns to tend on map " + this.map);
@@ -430,11 +445,11 @@ namespace TKS_PriorityTreatment
             return false;
         }
 
-        public static bool HasTendableHediff(Pawn pawn)
+        //the kinds of pawn vanilla's doctors look after - humanlikes and animals, not loose entities or mechs
+        public static bool IsPatientKind(Pawn pawn)
         {
             if (pawn.Dead == true) { return false; }
 
-            //only the kinds of pawn vanilla's doctors tend - humanlikes and animals, not loose entities or mechs
             if (!pawn.RaceProps.Humanlike && !pawn.RaceProps.Animal) { return false; }
 
 #if !v1_4
@@ -444,6 +459,22 @@ namespace TKS_PriorityTreatment
 
             //do extra mod-based checks
             if (!Utils.ExtraPawnChecks(pawn)) { return false; }
+
+            return true;
+        }
+
+        //downed outside a bed with nothing to tend (ie blacked out drunk). vanilla only rescues them when a doctor reaches rescuing
+        //in their normal work order, so they're priority rescued too. only the player's own pawns, like vanilla's rescue work
+        public static bool NeedsRescueOnly(Pawn pawn)
+        {
+            if (!pawn.Downed || pawn.Faction != Faction.OfPlayer || pawn.CarriedBy != null) { return false; }
+
+            return IsPatientKind(pawn) && CanRescueNowByPlayer(pawn);
+        }
+
+        public static bool HasTendableHediff(Pawn pawn)
+        {
+            if (!IsPatientKind(pawn)) { return false; }
 
             List<Hediff> pawnsHediffs = pawn.health.hediffSet.hediffs;
 
@@ -664,8 +695,14 @@ namespace TKS_PriorityTreatment
                 {
                     TKS_PriorityTreatment.DebugMessage(callingFunction + ": pawn " + sickPawn.Name + " needs treatment, attempting to treat with " + pawn.Name);
 
-                    Job gotoHealJob = TKS_PriorityTreatment.MakeTendJob(pawn, sickPawn);
-                    gotoHealJob.draftedTend = false;
+                    //a rescue-only patient (downed, nothing to tend) just gets carried to bed - no tend job
+                    bool rescueOnly = !TKS_PriorityTreatment.HasTendableHediff(sickPawn);
+
+                    Job gotoHealJob = rescueOnly ? null : TKS_PriorityTreatment.MakeTendJob(pawn, sickPawn);
+                    if (gotoHealJob != null)
+                    {
+                        gotoHealJob.draftedTend = false;
+                    }
 
                     //only a downed patient can be carried - vanilla fails a rescue job on anyone else as soon as it starts
                     //(ie a wounded animal asleep on the ground is tended where it lies, below)
@@ -688,6 +725,13 @@ namespace TKS_PriorityTreatment
 
                             return rescueJob;
                         }
+                    }
+
+                    //no bed to carry them to (or the tend job couldn't be made) - leave it to vanilla
+                    if (gotoHealJob == null)
+                    {
+                        TKS_PriorityTreatment.DebugMessage(callingFunction + ": no priority job for " + sickPawn.Name + (rescueOnly ? " (rescue only, no bed found)" : ""));
+                        return null;
                     }
 
                     if (!sickPawn.InBed())
