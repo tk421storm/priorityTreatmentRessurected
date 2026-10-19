@@ -164,7 +164,7 @@ namespace TKS_PriorityTreatment
                         if (shouldTendNow)
                         {
                             TKS_PriorityTreatment.DebugMessage("SomeoneNeedsTreatment: " + sickPawn.Name + " needs treatment (include sickness: " + includeSickness.ToString() + ")");
-                            if (TKS_PriorityTreatment.GoodLayingStatusForTend(sickPawn, null) || (TKS_PriorityTreatment.CanRescueNowByPlayer(sickPawn) && sickPawn.CarriedBy == null))
+                            if (TKS_PriorityTreatment.GoodLayingStatusForTend(sickPawn, null) || TKS_PriorityTreatment.LyingDownOutsideBed(sickPawn) || (TKS_PriorityTreatment.CanRescueNowByPlayer(sickPawn) && sickPawn.CarriedBy == null))
                             {
                                 if (!tendablePawns.Contains(sickPawn))
                                 {
@@ -415,6 +415,15 @@ namespace TKS_PriorityTreatment
                 return patient.InBed();
             }
             return patient.GetPosture() > PawnPosture.Standing;
+        }
+
+        //a humanlike who is up (not downed) but lying outside a bed - ie sleeping on the ground because no bed is free for them
+        //vanilla only tends a humanlike in bed, so they would never be tended. they are tended where they lie instead, like an animal
+        //(MakePriorityTreatmentJob gives anyone not in a bed and not downed a draftedTend job)
+        //downed pawns are left to the rescue check, which also keeps doctors away while enemies are near
+        public static bool LyingDownOutsideBed(Pawn patient)
+        {
+            return !patient.Downed && patient.GetPosture() != PawnPosture.Standing && !patient.InBed();
         }
 
         public static bool NeedsTreatmentNow(Pawn sickPawn, bool includeSickness)
