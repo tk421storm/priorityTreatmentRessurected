@@ -985,7 +985,9 @@ namespace TKS_PriorityTreatment
                     tag: null,
                     fromQueue: false,
                     canReturnCurJobToPool: false,
-                    keepCarryingThingOverride: null,
+                    //drop anything held (ie a baby, or a book) where the doctor stands. left null, a job that holds something (childcare, reading)
+                    //makes vanilla keep it in the doctor's hands, and the tend job then takes the held thing for its medicine
+                    keepCarryingThingOverride: false,
                     continueSleeping: false,
                     addToJobsThisTick: true);
                 if (queuedJob != null)
@@ -1065,7 +1067,8 @@ namespace TKS_PriorityTreatment
                     tag: null,
                     fromQueue: false,
                     canReturnCurJobToPool: false,
-                    keepCarryingThingOverride: null,
+                    //drop anything held where the doctor stands - see TryFindAndStartJob_prefix
+                    keepCarryingThingOverride: false,
                     continueSleeping: false,
                     addToJobsThisTick: true);
                 if (queuedJob != null)
